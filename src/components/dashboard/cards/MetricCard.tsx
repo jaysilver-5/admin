@@ -23,10 +23,10 @@ export default function MetricCard({
       <div className="mt-1 text-[22px] leading-[26px] font-bold text-gray-900">
         {value}
       </div>
-      <div className={`mt-1 inline-flex items-center text-[12px] ${isPositive ? "text-emerald-600" : "text-red-600"}`}>
+      {change && <div className={`mt-1 inline-flex items-center text-[12px] ${isPositive ? "text-emerald-600" : "text-red-600"}`}>
         {isPositive ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
         {change}
-      </div>
+      </div>}
     </div>
   );
 }

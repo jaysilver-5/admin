@@ -5,6 +5,7 @@ import StatCard from "@/components/dashboard/cards/StatCard";
 import MetricCard from "@/components/dashboard/cards/MetricCard";
 import DonutChart from "@/components/dashboard/charts/DonutChart";
 import { apiFetch, formatNaira } from "@/lib/api";
+import { fetchFinanceSummary } from "@/lib/finance";
 
 export default function HomeTab() {
   const [chartPeriod, setChartPeriod] = React.useState("This Month");
@@ -16,6 +17,7 @@ export default function HomeTab() {
   });
 
   const [metrics, setMetrics] = React.useState<any | null>(null);
+  const [finance, setFinance] = React.useState<any | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
   const handleMetricPeriodChange = (k: string, p: string) =>
@@ -23,8 +25,8 @@ export default function HomeTab() {
 
   React.useEffect(() => {
     let alive = true;
-    apiFetch<any>("/admin/dashboard/metrics")
-      .then((data) => { if (alive) setMetrics(data); })
+    Promise.all([apiFetch<any>("/admin/dashboard/metrics"), fetchFinanceSummary({})])
+      .then(([data, financeData]) => { if (alive) { setMetrics(data); setFinance(financeData); } })
       .catch((err) => { if (alive) setError(err?.message || "Unable to load dashboard metrics"); });
     return () => { alive = false; };
   }, []);
@@ -36,7 +38,7 @@ export default function HomeTab() {
   const completedOrders = metrics?.orders?.completed ?? 0;
   const cancelledOrders = metrics?.orders?.cancelled ?? 0;
   const todayOrders = metrics?.orders?.today ?? 0;
-  const revenue = metrics?.finance?.monthlyRevenue ?? 0;
+  const revenue = finance?.netPlatformRevenue ?? 0;
   const openComplaints = metrics?.support?.openComplaints ?? 0;
 
   return (
@@ -48,9 +50,9 @@ export default function HomeTab() {
           title="Total Users"
           total={users.toLocaleString()}
           active={users.toLocaleString()}
-          activePercentage="+4.00%"
+          activePercentage=""
           inactive="0"
-          inactivePercentage="+2.00%"
+          inactivePercentage=""
           isPositive
         />
         <StatCard
@@ -58,9 +60,9 @@ export default function HomeTab() {
           title="Total Merchants"
           total={merchants.toLocaleString()}
           active={(merchants - (metrics?.pendingApprovals?.merchants ?? 0)).toLocaleString()}
-          activePercentage="+4.00%"
+          activePercentage=""
           inactive={(metrics?.pendingApprovals?.merchants ?? 0).toLocaleString()}
-          inactivePercentage="+2.00%"
+          inactivePercentage=""
           isPositive
         />
         <StatCard
@@ -68,9 +70,9 @@ export default function HomeTab() {
           title="Total Riders"
           total={riders.toLocaleString()}
           active={(riders - (metrics?.pendingApprovals?.riders ?? 0)).toLocaleString()}
-          activePercentage="+4.00%"
+          activePercentage=""
           inactive={(metrics?.pendingApprovals?.riders ?? 0).toLocaleString()}
-          inactivePercentage="+2.00%"
+          inactivePercentage=""
           isPositive
         />
       </div>
@@ -80,16 +82,16 @@ export default function HomeTab() {
           icon={<ShoppingCart className="w-6 h-6" />}
           title="Total wash orders"
           value={(activeOrders + completedOrders + cancelledOrders).toLocaleString()}
-          change="+20.00%"
+          change=""
           isPositive
           period={metricPeriods.washOrders}
           onPeriodChange={(p) => handleMetricPeriodChange("washOrders", p)}
         />
         <MetricCard
           icon={<DollarSign className="w-6 h-6" />}
-          title="Revenue"
+          title="Net platform revenue"
           value={formatNaira(revenue)}
-          change="+9.00%"
+          change={finance ? `${finance.changes?.netPlatformRevenue >= 0 ? "+" : ""}${Number(finance.changes?.netPlatformRevenue || 0).toFixed(1)}%` : ""}
           isPositive
           period={metricPeriods.revenue}
           onPeriodChange={(p) => handleMetricPeriodChange("revenue", p)}
@@ -98,7 +100,7 @@ export default function HomeTab() {
           icon={<UserCheck className="w-6 h-6" />}
           title="Total complaint"
           value={openComplaints.toLocaleString()}
-          change="+20.00%"
+          change=""
           isPositive
           period={metricPeriods.complaints}
           onPeriodChange={(p) => handleMetricPeriodChange("complaints", p)}
@@ -107,14 +109,14 @@ export default function HomeTab() {
           icon={<ShoppingCart className="w-6 h-6" />}
           title="Volume"
           value={todayOrders.toLocaleString()}
-          change="+20.00%"
+          change=""
           isPositive
           period={metricPeriods.volume}
           onPeriodChange={(p) => handleMetricPeriodChange("volume", p)}
         />
       </div>
 
-      <DonutChart period={chartPeriod} onPeriodChange={setChartPeriod} />
+      <DonutChart period={chartPeriod} onPeriodChange={setChartPeriod} completed={completedOrders} cancelled={cancelledOrders} />
     </div>
   );
 }

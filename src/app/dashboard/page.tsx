@@ -1,8 +1,5 @@
-// app/(dashboard)/page.tsx
-"use client";
-import * as React from "react";
-import DashboardPage from "./DashboardPage";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <DashboardPage />;
+  redirect("/dashboard/overview");
 }

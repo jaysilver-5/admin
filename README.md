@@ -37,13 +37,13 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ## Security dependency update
 
-Next.js has been pinned to `15.5.7` to avoid Vercel's vulnerable-version warning for the previous `15.5.2` build.
+Next.js has been pinned to the Maintenance LTS security release `15.5.21`.
 
-Because the old `package-lock.json` was generated for Next.js `15.5.2`, regenerate the lockfile after pulling this version:
+Regenerate the lockfile after pulling this version:
 
 ```bash
-npm install
-npm run build
+pnpm install
+pnpm build
 ```
 
 Then commit the regenerated lockfile.

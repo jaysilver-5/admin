@@ -6,13 +6,18 @@ import PeriodDropdown from "@/components/dashboard/ui/PeriodDropdown";
 export default function DonutChart({
   period,
   onPeriodChange,
+  completed,
+  cancelled,
 }: {
   period: string;
   onPeriodChange: (p: string) => void;
+  completed: number;
+  cancelled: number;
 }) {
+  const total = Math.max(1, completed + cancelled);
   const donut = [
-    { name: "Completed", value: 94, raw: 547914, color: "#2563eb" },
-    { name: "Cancelled", value: 81, raw: 547914, color: "#ea580c" },
+    { name: "Completed", value: Math.round((completed / total) * 100), raw: completed, color: "#2563eb" },
+    { name: "Cancelled", value: Math.round((cancelled / total) * 100), raw: cancelled, color: "#ea580c" },
   ];
 
   const CustomTooltip = ({ active, payload }: any) => {
@@ -61,15 +66,12 @@ export default function DonutChart({
         </div>
 
         <div className="space-y-6 xl:mt-4">
-          {[
-            { k: "Completed", c: "bg-blue-600", v: "94%" },
-            { k: "Cancelled", c: "bg-orange-600", v: "81%" },
-          ].map((r) => (
+          {donut.map((item) => ({ k: item.name, c: item.name === "Completed" ? "bg-blue-600" : "bg-orange-600", raw: item.raw, v: `${item.value}%` })).map((r) => (
             <div key={r.k} className="flex items-center gap-3">
               <span className={`w-3 h-3 rounded-full ${r.c}`} />
               <div className="flex items-center gap-8">
                 <span className="text-sm font-medium text-gray-900 w-[92px]">{r.k}</span>
-                <span className="text-sm text-gray-500 w-[72px]">547,914</span>
+                <span className="text-sm text-gray-500 w-[72px]">{r.raw.toLocaleString()}</span>
                 <span className="text-sm font-semibold text-emerald-600">{r.v}</span>
               </div>
             </div>

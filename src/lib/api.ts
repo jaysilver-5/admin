@@ -28,6 +28,14 @@ export type AuthSession = {
   user: AuthUser;
 };
 
+export type AdminContext = {
+  id: string;
+  accountId: string;
+  displayName?: string | null;
+  roles: { key: string; name: string }[];
+  permissions: string[];
+};
+
 export class ApiError extends Error {
   status: number;
   details: unknown;
@@ -170,6 +178,15 @@ export async function apiFetch<T>(
     throw new ApiError(message, res.status, payload);
   }
 
+  if (
+    payload &&
+    typeof payload === "object" &&
+    "success" in payload &&
+    (payload as any).success === true &&
+    "data" in payload
+  ) {
+    return (payload as any).data as T;
+  }
   return payload as T;
 }
 
@@ -192,13 +209,18 @@ export async function adminLogin(identifier: string, password: string) {
   return session;
 }
 
+export function getAdminContext() {
+  return apiFetch<AdminContext>("/admin/me");
+}
+
 export function formatNaira(value: number | string | null | undefined) {
-  const num = Number(value || 0);
+  const minorUnits = Number(value || 0);
+  const num = Number.isFinite(minorUnits) ? minorUnits / 100 : 0;
   return new Intl.NumberFormat("en-NG", {
     style: "currency",
     currency: "NGN",
     maximumFractionDigits: 0,
-  }).format(Number.isFinite(num) ? num : 0);
+  }).format(num);
 }
 
 export function formatDate(value?: string | Date | null) {

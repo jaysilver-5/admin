@@ -26,20 +26,20 @@ export default function StatCard({
         <div className="flex items-center justify-between text-[13px]">
           <div className="flex items-center gap-2">
             <span className="text-gray-900 font-medium">{active}</span>
-            <span className={`inline-flex items-center ${isPositive ? "text-emerald-600" : "text-red-600"}`}>
+            {activePercentage && <span className={`inline-flex items-center ${isPositive ? "text-emerald-600" : "text-red-600"}`}>
               {isPositive ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
               {activePercentage}
-            </span>
+            </span>}
           </div>
           <span className="text-gray-500">Active</span>
         </div>
         <div className="flex items-center justify-between text-[13px]">
           <div className="flex items-center gap-2">
             <span className="text-gray-900 font-medium">{inactive}</span>
-            <span className={`inline-flex items-center ${isPositive ? "text-emerald-600" : "text-red-600"}`}>
+            {inactivePercentage && <span className={`inline-flex items-center ${isPositive ? "text-emerald-600" : "text-red-600"}`}>
               {isPositive ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
               {inactivePercentage}
-            </span>
+            </span>}
           </div>
           <span className="text-gray-500">Inactive</span>
         </div>

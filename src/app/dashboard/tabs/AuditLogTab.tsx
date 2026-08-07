@@ -1,0 +1,17 @@
+"use client";
+
+import * as React from "react";
+import { Search } from "lucide-react";
+import { AuditLog, fetchAuditLogs } from "@/lib/admin";
+import { formatDate, formatTime } from "@/lib/api";
+
+export default function AuditLogTab() {
+  const [items, setItems] = React.useState<AuditLog[]>([]);
+  const [search, setSearch] = React.useState("");
+  const [query, setQuery] = React.useState("");
+  const [page, setPage] = React.useState(1);
+  const [pages, setPages] = React.useState(1);
+  const [error, setError] = React.useState<string | null>(null);
+  React.useEffect(() => { fetchAuditLogs(page, query).then((res) => { setItems(res.items || []); setPages(res.totalPages || 1); }).catch((err) => setError(err?.message || "Unable to load audit logs")); }, [page, query]);
+  return <div className="space-y-6"><div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">Governance</p><h1 className="mt-1 text-2xl font-semibold text-slate-950">Audit log</h1><p className="mt-1 text-sm text-slate-500">An immutable trail of sensitive administrative actions.</p></div><form onSubmit={(e) => { e.preventDefault(); setPage(1); setQuery(search); }} className="flex max-w-xl gap-2"><div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"/><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search action or resource" className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm"/></div><button className="rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white">Search</button></form>{error && <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}<section className="overflow-hidden rounded-2xl border border-slate-200 bg-white"><div className="overflow-x-auto"><table className="w-full min-w-[900px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-5 py-3">Action</th><th className="px-5 py-3">Resource</th><th className="px-5 py-3">Administrator</th><th className="px-5 py-3">Permission</th><th className="px-5 py-3">Date</th></tr></thead><tbody className="divide-y divide-slate-100">{items.length ? items.map((row) => <tr key={row.id}><td className="px-5 py-4 font-medium text-slate-900">{row.action.replaceAll(".", " ")}</td><td className="px-5 py-4"><p>{row.resourceType || "—"}</p><p className="font-mono text-xs text-slate-400">{row.resourceId || "—"}</p></td><td className="px-5 py-4 font-mono text-xs text-slate-500">{row.actorId || "System"}</td><td className="px-5 py-4 text-xs text-slate-500">{row.permission || "—"}</td><td className="px-5 py-4 text-slate-600">{formatDate(row.createdAt)} <span className="block text-xs text-slate-400">{formatTime(row.createdAt)}</span></td></tr>) : <tr><td colSpan={5} className="px-5 py-12 text-center text-slate-500">No audit records found.</td></tr>}</tbody></table></div><div className="flex justify-end gap-2 border-t border-slate-100 p-4"><button disabled={page <= 1} onClick={() => setPage((v) => v - 1)} className="rounded-lg border px-3 py-2 text-xs disabled:opacity-40">Previous</button><span className="px-2 py-2 text-xs text-slate-500">{page} / {pages}</span><button disabled={page >= pages} onClick={() => setPage((v) => v + 1)} className="rounded-lg border px-3 py-2 text-xs disabled:opacity-40">Next</button></div></section></div>;
+}
