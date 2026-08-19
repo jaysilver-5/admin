@@ -2,24 +2,11 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 
-const percentOptions = Array.from({ length: 20 }, (_, i) => (i + 1) * 5);
 const money = (n: number) =>
   new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 2 }).format(n);
-
-function Select({ value, onChange, options, placeholder, className = "" }: { value: string | number; onChange: (v: string) => void; options: Array<string | number>; placeholder?: string; className?: string }) {
-  return (
-    <div className={`relative ${className}`}>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full h-[44px] appearance-none rounded-md border border-gray-300 bg-white px-3 pr-9 text-sm text-gray-800 outline-none focus:ring-1 focus:ring-blue-500">
-        {placeholder && <option value="" disabled>{placeholder}</option>}
-        {options.map((o) => <option key={String(o)} value={String(o)}>{String(o)}</option>)}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-    </div>
-  );
-}
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -31,7 +18,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
 
 type PriceTab = "users" | "merchant" | "riders";
 
-type ServiceFee = { id: string; vehicleType: "BIKE" | "CAR"; deliveryType: "NORMAL" | "EXPRESS" | "SUPER_EXPRESS"; percentage: number; isActive?: boolean };
+type SpeedFee = { id?: string; deliveryType: "EXPRESS" | "SUPER_EXPRESS"; percentage: number; maxDurationMinutes: number; isActive: boolean };
 type Commission = { id?: string; planCategory: "EXCLUSIVE" | "PREMIUM" | "BASIC"; commissionPercent: number; isActive?: boolean };
 type DistanceTier = { id: string; minKm: number; maxKm: number; amount: number; isActive?: boolean };
 
@@ -46,52 +33,53 @@ const HeaderTabs = ({ active, onChange }: { active: PriceTab; onChange: (t: Pric
 const stripPercent = (v: string) => Number(String(v).replace(/[^\d.]/g, "")) || 0;
 
 const UsersTab = () => {
-  const [fees, setFees] = React.useState<ServiceFee[]>([]);
+  const [fees, setFees] = React.useState<SpeedFee[]>([
+    { deliveryType: "SUPER_EXPRESS", percentage: 0, maxDurationMinutes: 300, isActive: true },
+    { deliveryType: "EXPRESS", percentage: 0, maxDurationMinutes: 2880, isActive: true },
+  ]);
   const [saving, setSaving] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    apiFetch<ServiceFee[]>("/admin/config/service-fees").then(setFees).catch((err) => setMessage(err?.message || "Unable to load service fees"));
+    apiFetch<SpeedFee[]>("/admin/config/delivery-speed-fees")
+      .then((rows) => setFees((defaults) => defaults.map((item) => rows.find((row) => row.deliveryType === item.deliveryType) ?? item)))
+      .catch((err) => setMessage(err?.message || "Unable to load speed fee settings"));
   }, []);
 
-  const getFee = (vehicleType: ServiceFee["vehicleType"], deliveryType: ServiceFee["deliveryType"]) => fees.find((f) => f.vehicleType === vehicleType && f.deliveryType === deliveryType);
-  const setFeeValue = (vehicleType: ServiceFee["vehicleType"], deliveryType: ServiceFee["deliveryType"], percentage: number) => {
-    setFees((prev) => {
-      const existing = prev.find((f) => f.vehicleType === vehicleType && f.deliveryType === deliveryType);
-      if (existing) return prev.map((f) => f.id === existing.id ? { ...f, percentage } : f);
-      return [...prev, { id: `new-${vehicleType}-${deliveryType}`, vehicleType, deliveryType, percentage, isActive: true }];
-    });
-  };
-
-  const rows: Array<[string, ServiceFee["vehicleType"], ServiceFee["deliveryType"]]> = [
-    ["Bike Normal washing", "BIKE", "NORMAL"],
-    ["Car Normal washing", "CAR", "NORMAL"],
-    ["Bike Express washing", "BIKE", "EXPRESS"],
-    ["Car Express washing", "CAR", "EXPRESS"],
-    ["Bike super express washing", "BIKE", "SUPER_EXPRESS"],
-    ["Car super express washing", "CAR", "SUPER_EXPRESS"],
-  ];
+  const updateFee = (deliveryType: SpeedFee["deliveryType"], patch: Partial<SpeedFee>) =>
+    setFees((current) => current.map((fee) => fee.deliveryType === deliveryType ? { ...fee, ...patch } : fee));
 
   const save = async () => {
     setSaving(true); setMessage(null);
     try {
-      await Promise.all(fees.map((f) => f.id.startsWith("new-")
-        ? apiFetch("/admin/config/service-fees", { method: "POST", body: JSON.stringify({ vehicleType: f.vehicleType, deliveryType: f.deliveryType, percentage: Number(f.percentage) }) })
-        : apiFetch(`/admin/config/service-fees/${f.id}`, { method: "PATCH", body: JSON.stringify({ percentage: Number(f.percentage), isActive: f.isActive ?? true }) })
-      ));
-      setFees(await apiFetch<ServiceFee[]>("/admin/config/service-fees"));
-      setMessage("Updated successfully");
-    } catch (err: any) { setMessage(err?.message || "Unable to update service fees"); }
+      await Promise.all(fees.map((fee) => apiFetch(`/admin/config/delivery-speed-fees/${fee.deliveryType}`, {
+        method: "PUT",
+        body: JSON.stringify({ percentage: Number(fee.percentage), maxDurationMinutes: Number(fee.maxDurationMinutes), isActive: fee.isActive }),
+      })));
+      setFees(await apiFetch<SpeedFee[]>("/admin/config/delivery-speed-fees"));
+      setMessage("Speed fees and delivery promises updated");
+    } catch (err: any) { setMessage(err?.message || "Unable to update speed fee settings"); }
     finally { setSaving(false); }
   };
 
-  return <div className="mt-6 max-w-[580px] space-y-5">
+  return <div className="mt-6 max-w-[760px] space-y-5">
+    <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-950">
+      <div className="font-semibold">Speed fee paid by the customer</div>
+      <p className="mt-1 text-blue-900/80">This is a Clothify surcharge on the merchant&apos;s service subtotal only. Rider pickup and delivery charges are excluded. If the merchant misses the promise measured from successful payment until clothes are marked ready, this surcharge is automatically returned to the customer&apos;s wallet.</p>
+    </div>
     {message && <div className="text-sm text-gray-600">{message}</div>}
-    {rows.map(([label, vehicle, delivery]) => {
-      const fee = getFee(vehicle, delivery);
-      return <div key={`${vehicle}-${delivery}`}><div className="mb-1 text-[12px] text-gray-600">{label}</div><Select value={`${fee?.percentage ?? 25}%`} onChange={(v) => setFeeValue(vehicle, delivery, stripPercent(v))} options={percentOptions.map((p) => `${p}%`)} /></div>;
+    {fees.map((fee) => {
+      const exampleFee = 10000 * (fee.percentage / 100);
+      return <div key={fee.deliveryType} className="rounded-lg border border-gray-200 p-5">
+        <div className="flex items-start justify-between gap-4"><div><div className="font-semibold text-gray-900">{fee.deliveryType === "SUPER_EXPRESS" ? "Super Express" : "Express"}</div><div className="mt-1 text-xs text-gray-500">Applies equally whether logistics uses a bike or car.</div></div><Toggle checked={fee.isActive} onChange={(isActive) => updateFee(fee.deliveryType, { isActive })} /></div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <label className="text-xs text-gray-600">Speed fee percentage<input type="number" min="0" max="100" step="0.1" value={fee.percentage} onChange={(e) => updateFee(fee.deliveryType, { percentage: Number(e.target.value) })} className="mt-1 h-11 w-full rounded-md border border-gray-300 px-3 text-sm" /></label>
+          <label className="text-xs text-gray-600">Promised processing time (hours)<input type="number" min="0.0167" step="0.5" value={fee.maxDurationMinutes / 60} onChange={(e) => updateFee(fee.deliveryType, { maxDurationMinutes: Math.max(1, Math.round(Number(e.target.value) * 60)) })} className="mt-1 h-11 w-full rounded-md border border-gray-300 px-3 text-sm" /></label>
+        </div>
+        <div className="mt-3 rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-600">Example: on a {money(10000)} service subtotal, the customer pays {money(exampleFee)} for {fee.deliveryType === "SUPER_EXPRESS" ? "Super Express" : "Express"}. Logistics is added separately.</div>
+      </div>;
     })}
-    <div className="pt-2"><button disabled={saving} onClick={save} className="h-11 w-full rounded-md bg-[#0B1E5B] text-white font-semibold">{saving ? "Updating…" : "Update"}</button></div>
+    <div className="pt-2"><button disabled={saving} onClick={save} className="h-11 w-full rounded-md bg-[#0B1E5B] text-white font-semibold">{saving ? "Updating…" : "Save speed settings"}</button></div>
   </div>;
 };
 
@@ -116,11 +104,16 @@ const MerchantTab = () => {
   };
 
   return <div className="mt-6 max-w-[580px] space-y-5">
+    <div className="rounded-lg border border-amber-100 bg-amber-50 p-4 text-sm text-amber-950">
+      <div className="font-semibold">Merchant commission retained by Clothify</div>
+      <p className="mt-1 text-amber-900/80">This percentage is deducted from the merchant&apos;s service subtotal. It does not include rider logistics or the customer&apos;s Express speed fee.</p>
+      <p className="mt-2 text-xs text-amber-900/70">Example at 25%: for {money(10000)} of laundry services, the merchant receives {money(7500)} and Clothify retains {money(2500)}.</p>
+    </div>
     {message && <div className="text-sm text-gray-600">{message}</div>}
-    {[["Exclusive Merchant percentages", "EXCLUSIVE"], ["Premium Merchant percentages", "PREMIUM"], ["Basic Merchant percentages", "BASIC"]].map(([label, key]) => (
-      <div key={key}><div className="mb-1 text-[12px] text-gray-600">{label}</div><Select value={`${tiers[key as Commission["planCategory"]]}%`} onChange={(v) => setTiers((p) => ({ ...p, [key]: stripPercent(v) }))} options={percentOptions.map((p) => `${p}%`)} /></div>
+    {[["Exclusive plan commission", "EXCLUSIVE"], ["Premium plan commission", "PREMIUM"], ["Basic plan commission", "BASIC"]].map(([label, key]) => (
+      <label key={key} className="block text-[12px] text-gray-600">{label}<div className="relative mt-1"><input type="number" min="0" max="100" step="0.1" value={tiers[key as Commission["planCategory"]]} onChange={(e) => setTiers((p) => ({ ...p, [key]: Number(e.target.value) }))} className="h-11 w-full rounded-md border border-gray-300 px-3 pr-9 text-sm" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">%</span></div></label>
     ))}
-    <div className="pt-2"><button disabled={saving} onClick={save} className="h-11 w-full rounded-md bg-[#0B1E5B] text-white font-semibold">{saving ? "Updating…" : "Update"}</button></div>
+    <div className="pt-2"><button disabled={saving} onClick={save} className="h-11 w-full rounded-md bg-[#0B1E5B] text-white font-semibold">{saving ? "Updating…" : "Save merchant commissions"}</button></div>
   </div>;
 };
 
@@ -131,7 +124,7 @@ const parseRange = (label: string) => {
 };
 
 const RidersTab = () => {
-  const [percentage, setPercentage] = React.useState("25%");
+  const [percentage, setPercentage] = React.useState("75");
   const [tiers, setTiers] = React.useState<Tier[]>([]);
   const [newKm, setNewKm] = React.useState({ km: "", amount: "" });
   const [saving, setSaving] = React.useState(false);
@@ -140,8 +133,8 @@ const RidersTab = () => {
   React.useEffect(() => {
     Promise.all([apiFetch<any[]>("/admin/config/system"), apiFetch<DistanceTier[]>("/admin/config/rider-distance-pricing")])
       .then(([configs, rows]) => {
-        const riderPercent = configs.find((c) => c.key === "RIDER_PERCENTAGE" || c.key === "RIDER_COMMISSION_PERCENT")?.parsedNumber;
-        if (riderPercent != null) setPercentage(`${riderPercent}%`);
+        const riderPercent = configs.find((c) => c.key === "RIDER_EARNINGS_PERCENT")?.parsedNumber;
+        if (riderPercent != null) setPercentage(String(riderPercent));
         setTiers(rows.map((t) => ({ id: t.id, minKm: Number(t.minKm), maxKm: Number(t.maxKm), label: `${t.minKm}km–${t.maxKm}km`, amount: Number(t.amount), enabled: t.isActive !== false })));
       })
       .catch((err) => setMessage(err?.message || "Unable to load rider pricing"));
@@ -150,7 +143,7 @@ const RidersTab = () => {
   const addTier = () => {
     if (!newKm.km || !newKm.amount) return;
     const range = parseRange(newKm.km);
-    setTiers((p) => [...p, { id: `new-${crypto.randomUUID()}`, label: `${range.minKm}km–${range.maxKm}km`, minKm: range.minKm, maxKm: range.maxKm, amount: Number(newKm.amount.replace(/[^\d.]/g, "")) || 0, enabled: true }]);
+    setTiers((p) => [...p, { id: `new-${crypto.randomUUID()}`, label: `${range.minKm}km–${range.maxKm}km`, minKm: range.minKm, maxKm: range.maxKm, amount: Math.round((Number(newKm.amount.replace(/[^\d.]/g, "")) || 0) * 100), enabled: true }]);
     setNewKm({ km: "", amount: "" });
   };
 
@@ -159,7 +152,7 @@ const RidersTab = () => {
   const save = async () => {
     setSaving(true); setMessage(null);
     try {
-      await apiFetch("/admin/config/system/RIDER_PERCENTAGE", { method: "PUT", body: JSON.stringify({ value: String(stripPercent(percentage)), description: "Rider percentage configured from admin panel" }) });
+      await apiFetch("/admin/config/system/RIDER_EARNINGS_PERCENT", { method: "PUT", body: JSON.stringify({ value: String(stripPercent(percentage)), description: "Percentage of each logistics leg paid to the assigned rider" }) });
       await Promise.all(tiers.map((t) => t.id.startsWith("new-")
         ? apiFetch("/admin/config/rider-distance-pricing", { method: "POST", body: JSON.stringify({ minKm: t.minKm, maxKm: t.maxKm, amount: t.amount, isActive: t.enabled }) })
         : apiFetch(`/admin/config/rider-distance-pricing/${t.id}`, { method: "PATCH", body: JSON.stringify({ minKm: t.minKm, maxKm: t.maxKm, amount: t.amount, isActive: t.enabled }) })
@@ -172,12 +165,16 @@ const RidersTab = () => {
   };
 
   return <div className="mt-6 space-y-5">
+    <div className="max-w-[760px] rounded-lg border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-950">
+      <div className="font-semibold">Logistics pricing and rider payout</div>
+      <p className="mt-1 text-emerald-900/80">The distance tier sets what the customer pays for each logistics leg: customer → merchant and merchant → customer. The rider earns the percentage below from the applicable leg; Clothify retains the remainder.</p>
+    </div>
     {message && <div className="text-sm text-gray-600">{message}</div>}
-    <div><div className="mb-1 text-[12px] text-gray-600">Riders percentages</div><Select value={percentage} onChange={(v) => setPercentage(v)} options={percentOptions.map((p) => `${p}%`)} className="max-w-[580px]" /></div>
-    {tiers.map((t) => <div key={t.id} className="grid grid-cols-1 sm:grid-cols-[1fr_auto] items-center gap-4"><div><div className="mb-1 text-[12px] text-gray-600">{t.label}</div><Select value={money(t.amount)} onChange={(v) => updateTier(t.id, { amount: Number(String(v).replace(/[^\d.]/g, "")) || 0 })} options={[money(15000), money(20000), money(25000), money(30000), money(35000)]} className="w-full" /></div><div className="sm:justify-self-end"><Toggle checked={t.enabled} onChange={(v) => updateTier(t.id, { enabled: v })} /></div></div>)}
+    <label className="block max-w-[580px] text-[12px] text-gray-600">Rider share of each logistics leg<div className="relative mt-1"><input type="number" min="0" max="100" step="0.1" value={percentage} onChange={(e) => setPercentage(e.target.value)} className="h-11 w-full rounded-md border border-gray-300 px-3 pr-9 text-sm" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">%</span></div></label>
+    {tiers.map((t) => <div key={t.id} className="grid max-w-[760px] grid-cols-1 items-end gap-4 sm:grid-cols-[1fr_1fr_auto]"><label className="text-[12px] text-gray-600">Distance range<input value={t.label} onChange={(e) => { const range = parseRange(e.target.value); updateTier(t.id, { label: e.target.value, ...range }); }} className="mt-1 h-11 w-full rounded-md border border-gray-300 px-3 text-sm" /></label><label className="text-[12px] text-gray-600">Customer charge per leg (NGN)<input type="number" min="0" step="50" value={t.amount / 100} onChange={(e) => updateTier(t.id, { amount: Math.round(Number(e.target.value) * 100) })} className="mt-1 h-11 w-full rounded-md border border-gray-300 px-3 text-sm" /></label><div className="h-11 flex items-center"><Toggle checked={t.enabled} onChange={(v) => updateTier(t.id, { enabled: v })} /></div></div>)}
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><div><div className="mb-1 text-[12px] text-gray-600">Input kilometer</div><input value={newKm.km} onChange={(e) => setNewKm((p) => ({ ...p, km: e.target.value }))} placeholder="e.g., 600km–650km" className="h-[44px] w-full rounded-md border border-gray-300 bg-white px-3 text-sm outline-none focus:ring-1 focus:ring-blue-500" /></div><div><div className="mb-1 text-[12px] text-gray-600">Input amount</div><input value={newKm.amount} onChange={(e) => setNewKm((p) => ({ ...p, amount: e.target.value }))} placeholder="₦25,000.00" className="h-[44px] w-full rounded-md border border-gray-300 bg-white px-3 text-sm outline-none focus:ring-1 focus:ring-blue-500" /></div></div>
     <button onClick={addTier} type="button" className="inline-flex items-center gap-2 text-sm text-gray-700"><Plus className="h-4 w-4" /> Add new kilometer</button>
-    <div className="pt-2"><button disabled={saving} onClick={save} className="h-11 w-full rounded-md bg-[#0B1E5B] text-white font-semibold">{saving ? "Saving…" : "Save and Update"}</button></div>
+    <div className="max-w-[760px] pt-2"><button disabled={saving} onClick={save} className="h-11 w-full rounded-md bg-[#0B1E5B] text-white font-semibold">{saving ? "Saving…" : "Save rider pricing"}</button></div>
   </div>;
 };
 
