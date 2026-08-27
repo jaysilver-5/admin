@@ -1,13 +1,25 @@
 "use client";
 import * as React from "react";
-import { Car, DollarSign, ShoppingCart, Store, UserCheck, Users } from "lucide-react";
+import {
+  Car,
+  DollarSign,
+  ShoppingCart,
+  Store,
+  UserCheck,
+  Users,
+} from "lucide-react";
 import StatCard from "@/components/dashboard/cards/StatCard";
 import MetricCard from "@/components/dashboard/cards/MetricCard";
 import DonutChart from "@/components/dashboard/charts/DonutChart";
 import { apiFetch, formatNaira } from "@/lib/api";
 import { fetchFinanceSummary } from "@/lib/finance";
 
-export default function HomeTab() {
+export default function HomeTab({
+  permissions = [],
+}: {
+  permissions?: string[];
+}) {
+  const canViewFinance = permissions.includes("finance.read");
   const [chartPeriod, setChartPeriod] = React.useState("This Month");
   const [metricPeriods, setMetricPeriods] = React.useState({
     washOrders: "This Week",
@@ -25,11 +37,23 @@ export default function HomeTab() {
 
   React.useEffect(() => {
     let alive = true;
-    Promise.all([apiFetch<any>("/admin/dashboard/metrics"), fetchFinanceSummary({})])
-      .then(([data, financeData]) => { if (alive) { setMetrics(data); setFinance(financeData); } })
-      .catch((err) => { if (alive) setError(err?.message || "Unable to load dashboard metrics"); });
-    return () => { alive = false; };
-  }, []);
+    Promise.all([
+      apiFetch<any>("/admin/dashboard/metrics"),
+      canViewFinance ? fetchFinanceSummary({}) : Promise.resolve(null),
+    ])
+      .then(([data, financeData]) => {
+        if (alive) {
+          setMetrics(data);
+          setFinance(financeData);
+        }
+      })
+      .catch((err) => {
+        if (alive) setError(err?.message || "Unable to load dashboard metrics");
+      });
+    return () => {
+      alive = false;
+    };
+  }, [canViewFinance]);
 
   const users = metrics?.users ?? 0;
   const merchants = metrics?.merchants ?? 0;
@@ -43,7 +67,11 @@ export default function HomeTab() {
 
   return (
     <div className="space-y-6">
-      {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>}
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+          {error}
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         <StatCard
           icon={<Users className="w-6 h-6 text-emerald-600" />}
@@ -59,9 +87,13 @@ export default function HomeTab() {
           icon={<Store className="w-6 h-6 text-emerald-600" />}
           title="Total Merchants"
           total={merchants.toLocaleString()}
-          active={(merchants - (metrics?.pendingApprovals?.merchants ?? 0)).toLocaleString()}
+          active={(
+            merchants - (metrics?.pendingApprovals?.merchants ?? 0)
+          ).toLocaleString()}
           activePercentage=""
-          inactive={(metrics?.pendingApprovals?.merchants ?? 0).toLocaleString()}
+          inactive={(
+            metrics?.pendingApprovals?.merchants ?? 0
+          ).toLocaleString()}
           inactivePercentage=""
           isPositive
         />
@@ -69,7 +101,9 @@ export default function HomeTab() {
           icon={<Car className="w-6 h-6 text-emerald-600" />}
           title="Total Riders"
           total={riders.toLocaleString()}
-          active={(riders - (metrics?.pendingApprovals?.riders ?? 0)).toLocaleString()}
+          active={(
+            riders - (metrics?.pendingApprovals?.riders ?? 0)
+          ).toLocaleString()}
           activePercentage=""
           inactive={(metrics?.pendingApprovals?.riders ?? 0).toLocaleString()}
           inactivePercentage=""
@@ -81,21 +115,31 @@ export default function HomeTab() {
         <MetricCard
           icon={<ShoppingCart className="w-6 h-6" />}
           title="Total wash orders"
-          value={(activeOrders + completedOrders + cancelledOrders).toLocaleString()}
+          value={(
+            activeOrders +
+            completedOrders +
+            cancelledOrders
+          ).toLocaleString()}
           change=""
           isPositive
           period={metricPeriods.washOrders}
           onPeriodChange={(p) => handleMetricPeriodChange("washOrders", p)}
         />
-        <MetricCard
-          icon={<DollarSign className="w-6 h-6" />}
-          title="Net platform revenue"
-          value={formatNaira(revenue)}
-          change={finance ? `${finance.changes?.netPlatformRevenue >= 0 ? "+" : ""}${Number(finance.changes?.netPlatformRevenue || 0).toFixed(1)}%` : ""}
-          isPositive
-          period={metricPeriods.revenue}
-          onPeriodChange={(p) => handleMetricPeriodChange("revenue", p)}
-        />
+        {canViewFinance && (
+          <MetricCard
+            icon={<DollarSign className="w-6 h-6" />}
+            title="Net platform revenue"
+            value={formatNaira(revenue)}
+            change={
+              finance
+                ? `${finance.changes?.netPlatformRevenue >= 0 ? "+" : ""}${Number(finance.changes?.netPlatformRevenue || 0).toFixed(1)}%`
+                : ""
+            }
+            isPositive
+            period={metricPeriods.revenue}
+            onPeriodChange={(p) => handleMetricPeriodChange("revenue", p)}
+          />
+        )}
         <MetricCard
           icon={<UserCheck className="w-6 h-6" />}
           title="Total complaint"
@@ -116,7 +160,12 @@ export default function HomeTab() {
         />
       </div>
 
-      <DonutChart period={chartPeriod} onPeriodChange={setChartPeriod} completed={completedOrders} cancelled={cancelledOrders} />
+      <DonutChart
+        period={chartPeriod}
+        onPeriodChange={setChartPeriod}
+        completed={completedOrders}
+        cancelled={cancelledOrders}
+      />
     </div>
   );
 }

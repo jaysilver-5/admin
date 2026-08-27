@@ -72,8 +72,10 @@ export function getAuthUser(): AuthUser | null {
 export function saveSession(session: AuthSession) {
   if (typeof window === "undefined") return;
   localStorage.setItem(ACCESS_TOKEN_KEY, session.accessToken);
-  if (session.refreshToken) localStorage.setItem(REFRESH_TOKEN_KEY, session.refreshToken);
-  if (session.sessionId) localStorage.setItem(SESSION_ID_KEY, session.sessionId);
+  if (session.refreshToken)
+    localStorage.setItem(REFRESH_TOKEN_KEY, session.refreshToken);
+  if (session.sessionId)
+    localStorage.setItem(SESSION_ID_KEY, session.sessionId);
   localStorage.setItem(USER_KEY, JSON.stringify(session.user));
 }
 
@@ -101,7 +103,9 @@ function getSessionId() {
   return localStorage.getItem(SESSION_ID_KEY);
 }
 
-async function refreshSession() {
+let refreshInFlight: Promise<string | null> | null = null;
+
+async function performSessionRefresh() {
   const refreshToken = getRefreshToken();
   const sessionId = getSessionId();
   const user = getAuthUser();
@@ -121,7 +125,18 @@ async function refreshSession() {
   return nextSession.accessToken;
 }
 
-function toQuery(params?: Record<string, string | number | boolean | null | undefined>) {
+function refreshSession() {
+  if (!refreshInFlight) {
+    refreshInFlight = performSessionRefresh().finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
+}
+
+function toQuery(
+  params?: Record<string, string | number | boolean | null | undefined>,
+) {
   const search = new URLSearchParams();
   Object.entries(params ?? {}).forEach(([key, value]) => {
     if (value === undefined || value === null || value === "") return;
@@ -133,7 +148,9 @@ function toQuery(params?: Record<string, string | number | boolean | null | unde
 
 async function requestOnce<T>(
   path: string,
-  options: RequestInit & { query?: Record<string, string | number | boolean | null | undefined> } = {},
+  options: RequestInit & {
+    query?: Record<string, string | number | boolean | null | undefined>;
+  } = {},
   tokenOverride?: string | null,
 ): Promise<{ res: Response; payload: T | unknown; tokenUsed: string | null }> {
   const token = tokenOverride ?? getAccessToken();
@@ -141,25 +158,34 @@ async function requestOnce<T>(
   const url = `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}${query}`;
   const headers = new Headers(options.headers || {});
 
-  if (!headers.has("Content-Type") && options.body) headers.set("Content-Type", "application/json");
+  if (!headers.has("Content-Type") && options.body)
+    headers.set("Content-Type", "application/json");
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
   const res = await fetch(url, { ...options, headers });
   const contentType = res.headers.get("content-type") || "";
-  const payload = contentType.includes("application/json") ? await res.json().catch(() => null) : await res.text();
+  const payload = contentType.includes("application/json")
+    ? await res.json().catch(() => null)
+    : await res.text();
   return { res, payload, tokenUsed: token };
 }
 
 export async function apiFetch<T>(
   path: string,
-  options: RequestInit & { query?: Record<string, string | number | boolean | null | undefined> } = {},
+  options: RequestInit & {
+    query?: Record<string, string | number | boolean | null | undefined>;
+  } = {},
 ): Promise<T> {
   let { res, payload, tokenUsed } = await requestOnce<T>(path, options);
 
   if (res.status === 401 && tokenUsed && !path.startsWith("/auth/")) {
     const refreshed = await refreshSession().catch(() => null);
     if (refreshed) {
-      ({ res, payload, tokenUsed } = await requestOnce<T>(path, options, refreshed));
+      ({ res, payload, tokenUsed } = await requestOnce<T>(
+        path,
+        options,
+        refreshed,
+      ));
     }
   }
 
@@ -171,7 +197,9 @@ export async function apiFetch<T>(
           : String((payload as any).message)
         : null) || `Request failed with status ${res.status}`;
 
-    if ((res.status === 401 || res.status === 403) && tokenUsed && !path.startsWith("/auth/login")) {
+    // A 403 means the session is valid but the administrator is outside their
+    // assigned boundary. Only an unrecoverable 401 should end the session.
+    if (res.status === 401 && tokenUsed && !path.startsWith("/auth/login")) {
       clearSession();
     }
 
@@ -202,7 +230,11 @@ export async function adminLogin(identifier: string, password: string) {
   });
 
   if (session.user?.role !== "ADMIN") {
-    throw new ApiError("This account is not an admin account.", 403, session.user);
+    throw new ApiError(
+      "This account is not an admin account.",
+      403,
+      session.user,
+    );
   }
 
   saveSession(session);
@@ -238,5 +270,8 @@ export function formatTime(value?: string | Date | null) {
 }
 
 export function totalPages(total: number, limit: number) {
-  return Math.max(1, Math.ceil((Number(total) || 0) / Math.max(1, Number(limit) || 1)));
+  return Math.max(
+    1,
+    Math.ceil((Number(total) || 0) / Math.max(1, Number(limit) || 1)),
+  );
 }
