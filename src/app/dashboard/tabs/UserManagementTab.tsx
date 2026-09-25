@@ -133,7 +133,7 @@ export default function UserManagementTab() {
 
       {/* Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+        <div className="border-b border-gray-200 px-4 py-3">
           <div className="text-sm text-gray-500">
             Showing {(safePage - 1) * perPage + 1} to {Math.min(safePage * perPage, total)} of {total} entries
           </div>
@@ -151,7 +151,7 @@ export default function UserManagementTab() {
           onAction={requestToggle} // ← suspend/activate entry point
         />}
 
-        <div className="px-4 sm:px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+        <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
           <span className="hidden text-sm text-gray-500 sm:inline">Page {safePage} of {totalPages}</span>
           <Pagination page={safePage} totalPages={totalPages} onChange={setPage} />
         </div>

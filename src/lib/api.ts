@@ -269,6 +269,18 @@ export function formatTime(value?: string | Date | null) {
   return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 }
 
+export function formatNigerianPhone(value?: string | null) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "—";
+  if (raw.startsWith("deleted_")) return raw;
+
+  const compact = raw.replace(/[\s()-]/g, "");
+  if (compact.startsWith("+234")) return `0${compact.slice(4)}`;
+  if (compact.startsWith("234")) return `0${compact.slice(3)}`;
+  if (/^[789]\d{9}$/.test(compact)) return `0${compact}`;
+  return compact;
+}
+
 export function totalPages(total: number, limit: number) {
   return Math.max(
     1,

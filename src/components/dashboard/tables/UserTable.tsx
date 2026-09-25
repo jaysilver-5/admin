@@ -2,6 +2,7 @@
 import * as React from "react";
 import { History, UserMinus } from "lucide-react";
 import type { User } from "@/lib/users";
+import { formatNigerianPhone } from "@/lib/api";
 import CopyableCell from "./CopyableCell";
 
 export default function UserTable({
@@ -25,19 +26,19 @@ export default function UserTable({
 
   return (
     <div className="overflow-x-auto overscroll-x-contain" tabIndex={0} aria-label="Users table, horizontally scrollable">
-      <table className="w-full min-w-[860px] table-fixed divide-y divide-gray-200">
+      <table className="w-full min-w-[820px] table-fixed divide-y divide-gray-200">
         <colgroup>
           <col className="w-14" />
-          <col className="w-[18%]" />
           <col className="w-[17%]" />
+          <col className="w-[16%]" />
           <col className="w-[25%]" />
-          <col className="w-[15%]" />
-          <col className="w-[15%]" />
-          <col className="w-28" />
+          <col className="w-[14%]" />
+          <col className="w-[18%]" />
+          <col className="w-24" />
         </colgroup>
         <thead className="bg-gray-50">
           <tr>
-            <th className="sticky left-0 z-20 bg-gray-50 px-4 py-3 text-left sm:px-6">
+            <th className="sticky left-0 z-20 bg-gray-50 px-3 py-2.5 text-left">
               <input
                 onClick={stop}
                 type="checkbox"
@@ -57,7 +58,7 @@ export default function UserTable({
             ].map((h) => (
               <th
                 key={h}
-                className={`px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 sm:px-6 ${h === "Actions" ? "sticky right-0 z-20 bg-gray-50" : ""}`}
+                className={`px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 ${h === "Actions" ? "sticky right-0 z-20 bg-gray-50" : ""}`}
               >
                 {h}
               </th>
@@ -74,7 +75,7 @@ export default function UserTable({
                 className="group/row hover:bg-gray-50"
               >
                 {/* select */}
-                <td className="sticky left-0 z-10 bg-white px-4 py-4 group-hover/row:bg-gray-50 sm:px-6" onClick={stop}>
+                <td className="sticky left-0 z-10 bg-white px-3 py-3 group-hover/row:bg-gray-50" onClick={stop}>
                   <input
                     type="checkbox"
                     checked={selected.includes(u.id)}
@@ -85,32 +86,32 @@ export default function UserTable({
                 </td>
 
                 {/* name */}
-                <td className="px-4 py-4 text-sm font-medium text-gray-900 sm:px-6">
+                <td className="px-3 py-3 text-sm font-medium text-gray-900">
                   <CopyableCell value={u.fullName} label="full name" />
                 </td>
 
                 {/* phone */}
-                <td className="px-4 py-4 text-sm text-gray-500 sm:px-6">
-                  <CopyableCell value={u.phoneNumber} label="phone number" />
+                <td className="px-3 py-3 text-sm text-gray-500">
+                  <CopyableCell value={formatNigerianPhone(u.phoneNumber)} label="phone number" truncate={false} />
                 </td>
 
                 {/* email */}
-                <td className="px-4 py-4 text-sm text-gray-900 sm:px-6">
+                <td className="px-3 py-3 text-sm text-gray-900">
                   <CopyableCell value={u.email} label="email address" />
                 </td>
 
                 {/* wallet */}
-                <td className="px-4 py-4 text-sm font-medium text-gray-900 sm:px-6">
+                <td className="px-3 py-3 text-sm font-medium text-gray-900">
                   <CopyableCell value={fmt(u.walletBalance)} label="wallet balance" />
                 </td>
 
                 {/* last login */}
-                <td className="px-4 py-4 text-sm text-gray-500 sm:px-6">
-                  <CopyableCell value={u.lastLoginDate} label="last login date" />
+                <td className="px-3 py-3 text-sm text-gray-500">
+                  <CopyableCell value={u.lastLoginDate} label="last login date" truncate={false} />
                 </td>
 
                 {/* actions: icon-only toggle */}
-                <td className="sticky right-0 z-10 bg-white px-4 py-4 text-sm group-hover/row:bg-gray-50 sm:px-6" onClick={stop}>
+                <td className="sticky right-0 z-10 bg-white px-3 py-3 text-sm group-hover/row:bg-gray-50" onClick={stop}>
                   <div className="flex items-center justify-end gap-1">
                   <button
                     type="button"

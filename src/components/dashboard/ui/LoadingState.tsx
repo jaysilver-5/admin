@@ -19,7 +19,7 @@ export function TableLoadingState({
     <div className={`animate-pulse space-y-1 ${className}`} role="status" aria-label={label}>
       <span className="sr-only">{label}…</span>
       {Array.from({ length: rows }, (_, row) => (
-        <div key={row} className="grid min-h-14 items-center gap-5 border-b border-slate-100 px-5 py-3 last:border-0" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+        <div key={row} className="grid min-h-12 items-center gap-3 border-b border-slate-100 px-3 py-2.5 last:border-0" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
           {Array.from({ length: columns }, (_, column) => (
             <Bar key={column} className={`h-3 ${column === columns - 1 ? "w-1/2 justify-self-end" : column % 2 ? "w-3/4" : "w-full"}`} />
           ))}

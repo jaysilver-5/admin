@@ -13,6 +13,7 @@ import ConfirmMerchantActionModal from "@/components/dashboard/modals/ConfirmMer
 import MerchantProfileModal from "@/components/dashboard/modals/MerchantProfileModal"; // reuse profile shell
 import RiderDocumentsModal from "@/components/dashboard/modals/RiderDocumentsModal";
 import { TableLoadingState } from "@/components/dashboard/ui/LoadingState";
+import { formatNigerianPhone } from "@/lib/api";
 
 import {
   fetchRiders,
@@ -238,7 +239,7 @@ export default function RiderManagementTab() {
 
       {/* Card + table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+        <div className="border-b border-gray-200 px-4 py-3">
           <div className="text-sm text-gray-500">
             Showing {(safePage - 1) * perPage + 1} to{" "}
             {Math.min(safePage * perPage, total)} of {total} entries
@@ -249,11 +250,11 @@ export default function RiderManagementTab() {
         {loading && <TableLoadingState rows={6} columns={7} label="Loading riders" />}
 
         {!loading && <div className="overflow-x-auto overscroll-x-contain" tabIndex={0} aria-label="Riders table, horizontally scrollable">
-          <table className="w-full min-w-[980px] table-fixed divide-y divide-gray-200">
-            <colgroup><col className="w-14"/><col className="w-[18%]"/><col className="w-[16%]"/><col className="w-[22%]"/><col className="w-[13%]"/><col className="w-[14%]"/><col className="w-[10%]"/><col className="w-28"/></colgroup>
+          <table className="w-full min-w-[920px] table-fixed divide-y divide-gray-200">
+            <colgroup><col className="w-12"/><col className="w-[17%]"/><col className="w-[15%]"/><col className="w-[21%]"/><col className="w-[12%]"/><col className="w-[16%]"/><col className="w-[11%]"/><col className="w-24"/></colgroup>
             <thead className="bg-gray-50">
               <tr>
-                <th className="sticky left-0 z-20 bg-gray-50 px-4 py-3 sm:px-6">
+                <th className="sticky left-0 z-20 bg-gray-50 px-3 py-2.5">
                   <input
                     type="checkbox"
                     checked={
@@ -276,7 +277,7 @@ export default function RiderManagementTab() {
                 ].map((h) => (
                   <th
                     key={h}
-                    className={`px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 sm:px-6 ${h === "" ? "sticky right-0 z-20 bg-gray-50" : ""}`}
+                    className={`px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 ${h === "" ? "sticky right-0 z-20 bg-gray-50" : ""}`}
                   >
                     {h}
                   </th>
@@ -290,7 +291,7 @@ export default function RiderManagementTab() {
                   key={r.id}
                   className="group/row hover:bg-gray-50"
                 >
-                  <td className="sticky left-0 z-10 bg-white px-4 py-4 group-hover/row:bg-gray-50 sm:px-6" data-stop>
+                  <td className="sticky left-0 z-10 bg-white px-3 py-3 group-hover/row:bg-gray-50" data-stop>
                     <input
                       type="checkbox"
                       checked={selected.includes(r.id)}
@@ -300,26 +301,26 @@ export default function RiderManagementTab() {
                     />
                   </td>
 
-                  <td className="px-4 py-4 text-sm font-medium text-gray-900 sm:px-6">
+                  <td className="px-3 py-3 text-sm font-medium text-gray-900">
                     <CopyableCell value={r.fullName} label="rider name" />
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-700 sm:px-6">
-                    <CopyableCell value={r.phoneNumber} label="phone number" />
+                  <td className="px-3 py-3 text-sm text-gray-700">
+                    <CopyableCell value={formatNigerianPhone(r.phoneNumber)} label="phone number" truncate={false} />
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-700 sm:px-6">
+                  <td className="px-3 py-3 text-sm text-gray-700">
                     <CopyableCell value={r.email} label="email address" />
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-700 sm:px-6">
+                  <td className="px-3 py-3 text-sm text-gray-700">
                     <CopyableCell value={r.city} label="city" />
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-700 sm:px-6">
-                    <CopyableCell value={r.lastLoginDate} label="last login date" />
+                  <td className="px-3 py-3 text-sm text-gray-700">
+                    <CopyableCell value={r.lastLoginDate} label="last login date" truncate={false} />
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-900 sm:px-6">
+                  <td className="px-3 py-3 text-sm text-gray-900">
                     <CopyableCell value={r.vehicle ?? "Bike"} label="vehicle" />
                   </td>
 
-                  <td className="sticky right-0 z-10 bg-white px-4 py-4 text-sm group-hover/row:bg-gray-50 sm:px-6" data-stop>
+                  <td className="sticky right-0 z-10 bg-white px-3 py-3 text-sm group-hover/row:bg-gray-50" data-stop>
                     <div className="flex items-center justify-end gap-1">
                     <button type="button" onClick={() => onRowClick(r)} className="grid h-9 w-9 place-items-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label={`View details for ${r.fullName}`} title="View details"><Eye className="h-4 w-4"/></button>
                     <button
@@ -339,7 +340,7 @@ export default function RiderManagementTab() {
           </table>
         </div>}
 
-        <div className="px-4 sm:px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+        <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
           <span className="text-sm text-gray-500">
             Showing {(safePage - 1) * perPage + 1} to{" "}
             {Math.min(safePage * perPage, total)} of {total} entries

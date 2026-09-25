@@ -19,6 +19,7 @@ import MerchantProfileModal from "@/components/dashboard/modals/MerchantProfileM
 import MerchantDocumentsModal from "@/components/dashboard/modals/MerchantDocumentsModal";
 import ConfirmMerchantActionModal from "@/components/dashboard/modals/ConfirmMerchantActionModal";
 import { TableLoadingState } from "@/components/dashboard/ui/LoadingState";
+import { formatNigerianPhone } from "@/lib/api";
 
 import {
   fetchMerchants,
@@ -261,7 +262,7 @@ export default function MerchantManagementTab() {
 
       {/* Card with table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+        <div className="border-b border-gray-200 px-4 py-3">
           {/* <div className="text-sm text-gray-500">
             Showing {(safePage - 1) * perPage + 1} to{" "}
             {Math.min(safePage * perPage, total)} of {total} entries
@@ -273,11 +274,11 @@ export default function MerchantManagementTab() {
 
         {/* Table */}
         {!loading && <div className="overflow-x-auto overscroll-x-contain" tabIndex={0} aria-label="Merchants table, horizontally scrollable">
-          <table className="w-full min-w-[1040px] table-fixed divide-y divide-gray-200">
-            <colgroup><col className="w-14"/><col className="w-[16%]"/><col className="w-[15%]"/><col className="w-[20%]"/><col className="w-[24%]"/><col className="w-[12%]"/><col className="w-[9%]"/><col className="w-28"/></colgroup>
+          <table className="w-full min-w-[980px] table-fixed divide-y divide-gray-200">
+            <colgroup><col className="w-12"/><col className="w-[15%]"/><col className="w-[14%]"/><col className="w-[18%]"/><col className="w-[22%]"/><col className="w-[15%]"/><col className="w-[10%]"/><col className="w-24"/></colgroup>
             <thead className="bg-gray-50">
               <tr>
-                <th className="sticky left-0 z-20 bg-gray-50 px-4 py-3 sm:px-6">
+                <th className="sticky left-0 z-20 bg-gray-50 px-3 py-2.5">
                   <input
                     type="checkbox"
                     checked={
@@ -300,7 +301,7 @@ export default function MerchantManagementTab() {
                 ].map((h) => (
                   <th
                     key={h}
-                    className={`px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 sm:px-6 ${h === "" ? "sticky right-0 z-20 bg-gray-50" : ""}`}
+                    className={`px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 ${h === "" ? "sticky right-0 z-20 bg-gray-50" : ""}`}
                   >
                     {h}
                   </th>
@@ -314,7 +315,7 @@ export default function MerchantManagementTab() {
                   key={m.id}
                   className="group/row hover:bg-gray-50"
                 >
-                  <td className="sticky left-0 z-10 bg-white px-4 py-4 group-hover/row:bg-gray-50 sm:px-6" data-stop>
+                  <td className="sticky left-0 z-10 bg-white px-3 py-3 group-hover/row:bg-gray-50" data-stop>
                     <input
                       type="checkbox"
                       checked={selected.includes(m.id)}
@@ -324,26 +325,26 @@ export default function MerchantManagementTab() {
                     />
                   </td>
 
-                  <td className="px-4 py-4 text-sm font-medium text-gray-900 sm:px-6">
+                  <td className="px-3 py-3 text-sm font-medium text-gray-900">
                     <CopyableCell value={m.businessName} label="business name" />
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-700 sm:px-6">
-                    <CopyableCell value={m.phoneNumber} label="phone number" />
+                  <td className="px-3 py-3 text-sm text-gray-700">
+                    <CopyableCell value={formatNigerianPhone(m.phoneNumber)} label="phone number" truncate={false} />
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-700 sm:px-6">
+                  <td className="px-3 py-3 text-sm text-gray-700">
                     <CopyableCell value={m.email} label="email address" />
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-700 sm:px-6">
+                  <td className="px-3 py-3 text-sm text-gray-700">
                     <CopyableCell value={m.address} label="business address" lines={2} />
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-700 sm:px-6">
-                    <CopyableCell value={m.lastLoginDate} label="last login date" />
+                  <td className="px-3 py-3 text-sm text-gray-700">
+                    <CopyableCell value={m.lastLoginDate} label="last login date" truncate={false} />
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-900 sm:px-6">
-                    <CopyableCell value={m.serviceTier} label="service tier" />
+                  <td className="px-3 py-3 text-sm text-gray-900">
+                    <CopyableCell value={m.serviceTier} label="service tier" truncate={false} />
                   </td>
 
-                  <td className="sticky right-0 z-10 bg-white px-4 py-4 text-sm group-hover/row:bg-gray-50 sm:px-6" data-stop>
+                  <td className="sticky right-0 z-10 bg-white px-3 py-3 text-sm group-hover/row:bg-gray-50" data-stop>
                     <div className="flex items-center justify-end gap-1">
                     <button type="button" onClick={() => onRowClick(m)} className="grid h-9 w-9 place-items-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label={`View details for ${m.businessName}`} title="View details"><Eye className="h-4 w-4"/></button>
                     <button
@@ -364,7 +365,7 @@ export default function MerchantManagementTab() {
         </div>}
 
         {/* Footer */}
-        <div className="px-4 sm:px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+        <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
           <span className="text-sm text-gray-500">
             Showing {(safePage - 1) * perPage + 1} to{" "}
             {Math.min(safePage * perPage, total)} of {total} entries
