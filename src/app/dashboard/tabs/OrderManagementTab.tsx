@@ -10,6 +10,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { fetchOrderDetail, fetchOrders, type UiOrder as Order, type UiOrderStatus as OrderStatus } from "@/lib/orders";
+import { TableLoadingState } from "@/components/dashboard/ui/LoadingState";
 
 /* ------------------------ Pagination util ----------------------- */
 function buildWindow(page: number, total: number, windowSize = 5) {
@@ -140,8 +141,8 @@ export default function OrderManagementTab() {
         {/* rows */}
         <div className="px-2 py-2">
           {error && <div className="p-4 text-sm text-red-600">{error}</div>}
-          {loading && <div className="p-4 text-sm text-gray-500">Loading orders…</div>}
-          {pageItems.map((o) => (
+          {loading && <TableLoadingState rows={6} columns={5} label="Loading orders" />}
+          {!loading && pageItems.map((o) => (
             <div
               key={o.id}
               onClick={() => openOrderModal(o)}
@@ -157,7 +158,7 @@ export default function OrderManagementTab() {
             </div>
           ))}
 
-          {pageItems.length === 0 && (
+          {!loading && pageItems.length === 0 && (
             <div className="p-8 text-center text-gray-500">No orders found.</div>
           )}
         </div>

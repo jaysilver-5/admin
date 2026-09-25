@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, Landmark, RefreshCw, WalletCards } from "lucide-react";
 import { formatNaira } from "@/lib/api";
+import { DashboardContentLoadingState } from "@/components/dashboard/ui/LoadingState";
 import {
   FinanceSummary,
   Reconciliation,
@@ -97,7 +98,7 @@ export default function FinanceTab() {
       </div>
 
       {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
-      {loading && !summary ? <div className="h-40 animate-pulse rounded-2xl bg-slate-200" /> : summary && <>
+      {loading && !summary ? <DashboardContentLoadingState label="Loading finance data" /> : summary && <>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <MoneyCard label="Net platform revenue" value={summary.netPlatformRevenue} change={summary.changes.netPlatformRevenue} emphasis />
           <MoneyCard label="Gross payment volume" value={summary.grossVolume} change={summary.changes.grossVolume} />

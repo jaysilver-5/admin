@@ -18,6 +18,7 @@ import {
 
 import Sidebar from "@/components/dashboard/layout/Sidebar";
 import MobileTabs from "@/components/dashboard/layout/MobileTabs";
+import { PageLoadingState } from "@/components/dashboard/ui/LoadingState";
 
 import HomeTab from "./tabs/HomeTab";
 import UserManagementTab from "./tabs/UserManagementTab";
@@ -170,11 +171,7 @@ export default function DashboardPage() {
   const ActiveView = activeTab?.component;
 
   if (!checked) {
-    return (
-      <div className="min-h-screen bg-[#F7F8FA] grid place-items-center text-sm text-gray-500">
-        Checking admin session…
-      </div>
-    );
+    return <PageLoadingState label="Checking administrator session" />;
   }
 
   if (accessError || !admin || !ActiveView) {
@@ -203,8 +200,8 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F8FA]">
-      {/* Fixed Sidebar */}
+    <div className="min-h-screen bg-[#F7F8FA] lg:grid lg:grid-cols-[max-content_minmax(0,1fr)]">
+      {/* Intrinsic-width sidebar */}
       <Sidebar
         items={visibleTabs.map(({ name, icon }) => ({ name, icon }))}
         active={activeTab.name}
@@ -214,8 +211,9 @@ export default function DashboardPage() {
         }}
       />
 
+      <div className="min-w-0">
       {/* Header sits at content edge and spans full width */}
-      <header className="sticky top-0 z-30 bg-white lg:pl-[280px]">
+      <header className="sticky top-0 z-30 bg-white">
         <div className="pl-4 sm:px-6">
           <div className="h-16 flex items-center justify-between gap-4">
             <div className="min-w-0">
@@ -248,7 +246,7 @@ export default function DashboardPage() {
       </header>
 
       {/* Content column (aligned with header start) */}
-      <div className="lg:pl-[280px]">
+      <div>
         <MobileTabs
           items={visibleTabs.map(({ name, icon }) => ({ name, icon }))}
           active={activeTab.name}
@@ -267,6 +265,7 @@ export default function DashboardPage() {
             <ActiveView />
           )}
         </main>
+      </div>
       </div>
     </div>
   );

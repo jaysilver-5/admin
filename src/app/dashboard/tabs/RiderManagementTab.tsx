@@ -12,6 +12,7 @@ import RiderRowMenu from "@/components/dashboard/menus/RiderRowMenu";
 import ConfirmMerchantActionModal from "@/components/dashboard/modals/ConfirmMerchantActionModal"; // reuse confirm
 import MerchantProfileModal from "@/components/dashboard/modals/MerchantProfileModal"; // reuse profile shell
 import RiderDocumentsModal from "@/components/dashboard/modals/RiderDocumentsModal";
+import { TableLoadingState } from "@/components/dashboard/ui/LoadingState";
 
 import {
   fetchRiders,
@@ -245,7 +246,7 @@ export default function RiderManagementTab() {
         </div>
 
         {error && <div className="px-6 py-3 text-sm text-red-600">{error}</div>}
-        {loading && <div className="px-6 py-8 text-sm text-gray-500" role="status">Loading riders…</div>}
+        {loading && <TableLoadingState rows={6} columns={7} label="Loading riders" />}
 
         {!loading && <div className="overflow-x-auto overscroll-x-contain" tabIndex={0} aria-label="Riders table, horizontally scrollable">
           <table className="w-full min-w-[980px] table-fixed divide-y divide-gray-200">

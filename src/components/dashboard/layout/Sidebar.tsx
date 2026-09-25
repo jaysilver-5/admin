@@ -12,16 +12,16 @@ export default function Sidebar({
 }) {
   return (
     <aside
-      className="fixed left-0 top-0 h-screen w-[280px] bg-white py-2 hidden lg:flex flex-col z-40"
+      className="sticky top-0 z-40 hidden h-screen w-max self-start flex-col border-r border-gray-100 bg-white py-2 lg:flex"
       aria-label="Primary"
     >
-      <nav className="p-3 overflow-y-auto">
-        <ul className="space-y-1">
+      <nav className="w-max overflow-y-auto p-3">
+        <ul className="w-max space-y-1">
           {items.map((it) => (
             <li key={it.name}>
               <button
                 onClick={() => onSelect(it.name)}
-                className={`w-full flex items-center gap-3 rounded-full px-3 py-2.5 text-[14px] transition
+                className={`inline-flex w-fit items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-[14px] transition
                   ${
                     active === it.name
                       ? "bg-[#91ADF6] text-blue-700"
@@ -29,7 +29,7 @@ export default function Sidebar({
                   }`}
               >
                 <span className="shrink-0">{it.icon}</span>
-                <span className="truncate">{it.name}</span>
+                <span>{it.name}</span>
               </button>
             </li>
           ))}

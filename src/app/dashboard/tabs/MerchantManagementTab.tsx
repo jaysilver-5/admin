@@ -18,6 +18,7 @@ import MerchantRowMenu from "@/components/dashboard/menus/MerchantRowMenu";
 import MerchantProfileModal from "@/components/dashboard/modals/MerchantProfileModal";
 import MerchantDocumentsModal from "@/components/dashboard/modals/MerchantDocumentsModal";
 import ConfirmMerchantActionModal from "@/components/dashboard/modals/ConfirmMerchantActionModal";
+import { TableLoadingState } from "@/components/dashboard/ui/LoadingState";
 
 import {
   fetchMerchants,
@@ -268,7 +269,7 @@ export default function MerchantManagementTab() {
         </div>
 
         {error && <div className="px-6 py-3 text-sm text-red-600">{error}</div>}
-        {loading && <div className="px-6 py-8 text-sm text-gray-500" role="status">Loading merchants…</div>}
+        {loading && <TableLoadingState rows={6} columns={7} label="Loading merchants" />}
 
         {/* Table */}
         {!loading && <div className="overflow-x-auto overscroll-x-contain" tabIndex={0} aria-label="Merchants table, horizontally scrollable">

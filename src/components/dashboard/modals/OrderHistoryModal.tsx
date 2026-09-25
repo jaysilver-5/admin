@@ -4,6 +4,7 @@ import { Filter, Search as SearchIcon } from "lucide-react";
 import ModalBase from "./ModalBase";
 import { fetchUserOrders, type UserOrderRow } from "@/lib/users";
 import CopyableCell from "@/components/dashboard/tables/CopyableCell";
+import { TableLoadingState } from "@/components/dashboard/ui/LoadingState";
 
 type HistoryTab = "completed" | "ongoing" | "cancelled";
 
@@ -111,8 +112,8 @@ export default function OrderHistoryModal({
 
       <div className="mt-4 px-6 pb-6">
         {error && <div className="mb-3 text-sm text-red-600">{error}</div>}
-        {loading && <div className="mb-3 text-sm text-gray-500">Loading order history…</div>}
-        <div className="overflow-x-auto rounded-xl border border-gray-200">
+        {loading && <div className="overflow-hidden rounded-xl border border-gray-200"><TableLoadingState rows={5} columns={5} label="Loading order history" /></div>}
+        {!loading && <div className="overflow-x-auto rounded-xl border border-gray-200">
           <table className="w-full min-w-[680px] table-fixed">
             <thead className="bg-gray-50">
               <tr>
@@ -142,7 +143,7 @@ export default function OrderHistoryModal({
               )}
             </tbody>
           </table>
-        </div>
+        </div>}
       </div>
     </ModalBase>
   );

@@ -6,6 +6,7 @@ import { formatDate } from "@/lib/api";
 import { AdminRole, AdminTeamMember, fetchAdminRoles, fetchAdminTeam, updateAdminRoles, updateAdminStatus } from "@/lib/admin";
 import CopyableCell from "@/components/dashboard/tables/CopyableCell";
 import ModalBase from "@/components/dashboard/modals/ModalBase";
+import { TableLoadingState } from "@/components/dashboard/ui/LoadingState";
 
 export default function AdminTeamTab() {
   const [members, setMembers] = React.useState<AdminTeamMember[]>([]);
@@ -60,7 +61,7 @@ export default function AdminTeamTab() {
             <colgroup><col className="w-[27%]"/><col className="w-[25%]"/><col className="w-[15%]"/><col className="w-[12%]"/><col className="w-[21%]"/></colgroup>
             <thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-5 py-3">Administrator</th><th className="px-5 py-3">Roles</th><th className="px-5 py-3">Last login</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Controls</th></tr></thead>
             <tbody className="divide-y divide-slate-100">
-              {loading ? <tr><td colSpan={5} className="px-5 py-10 text-center text-slate-500" role="status">Loading administrators…</td></tr> : members.map((member) => {
+              {loading ? <tr><td colSpan={5} className="p-0"><TableLoadingState rows={5} columns={5} label="Loading administrators" /></td></tr> : members.map((member) => {
                 const contact = member.account.email || member.account.phone || "—";
                 return <tr key={member.id} className="hover:bg-slate-50/70"><td className="px-5 py-4"><p className="truncate font-medium text-slate-900">{member.displayName || contact}</p><CopyableCell value={contact} label="administrator contact" className="mt-1 text-xs text-slate-500"/></td><td className="px-5 py-4"><div className="flex flex-wrap gap-1">{member.roles.map(({ role }) => <span key={role.key} className="rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">{role.name}</span>)}</div></td><td className="px-5 py-4 text-slate-600"><CopyableCell value={formatDate(member.account.lastLoginAt)} label="last login date"/></td><td className="px-5 py-4"><span className={`rounded-full px-2 py-1 text-xs font-semibold ${member.isActive ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>{member.isActive ? "Active" : "Disabled"}</span></td><td className="px-5 py-4 text-right"><button onClick={() => open(member)} className="mr-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold hover:bg-slate-50">Edit roles</button><button onClick={() => void toggleStatus(member)} className="rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100">{member.isActive ? "Disable" : "Enable"}</button></td></tr>;
               })}

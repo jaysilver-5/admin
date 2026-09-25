@@ -8,6 +8,7 @@ import UserTable from "@/components/dashboard/tables/UserTable";
 import UserFilterPopover from "@/components/dashboard/filters/UserFilterPopover";
 import ConfirmActionModal from "@/components/dashboard/modals/ConfirmActionModal";
 import OrderHistoryModal from "@/components/dashboard/modals/OrderHistoryModal";
+import { TableLoadingState } from "@/components/dashboard/ui/LoadingState";
 
 import {
   countUsers,
@@ -139,7 +140,7 @@ export default function UserManagementTab() {
         </div>
 
         {error && <div className="px-6 py-3 text-sm text-red-600">{error}</div>}
-        {loading && <div className="px-6 py-8 text-sm text-gray-500" role="status">Loading users…</div>}
+        {loading && <TableLoadingState rows={6} columns={6} label="Loading users" />}
 
         {!loading && <UserTable
           users={items}
