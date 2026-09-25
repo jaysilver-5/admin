@@ -10,7 +10,6 @@ import {
   UserCheck,
   Bell,
   LifeBuoy,
-  Search as SearchIcon,
   Landmark,
   ArrowDownToLine,
   ShieldCheck,
@@ -219,16 +218,12 @@ export default function DashboardPage() {
       <header className="sticky top-0 z-30 bg-white lg:pl-[280px]">
         <div className="pl-4 sm:px-6">
           <div className="h-16 flex items-center justify-between gap-4">
-            <div className="flex-1 max-w-[320px] bg-[#F2F3F480] relative">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="search"
-                placeholder="Search"
-                className="block w-full pl-11 pr-3 py-2.5 text-[14px] placeholder:text-[#ABB1BA] rounded-xl focus:ring-1 bg-[#F2F3F480]"
-              />
+            <div className="min-w-0">
+              <p className="text-xs font-medium uppercase tracking-[0.14em] text-gray-400">Clothify control centre</p>
+              <p className="truncate text-sm font-semibold text-gray-900">{activeTab.name}</p>
             </div>
             <div className="flex items-center gap-4">
-              <button className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-50">
+              <button aria-label="Notifications" className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <Bell className="h-6 w-6" />
               </button>
               <button

@@ -4,11 +4,13 @@
 import * as React from "react";
 import {
   Filter,
+  Eye,
   MoreHorizontal,
   Search as SearchIcon,
 } from "lucide-react";
 
 import Pagination from "@/components/dashboard/tables/Pagination";
+import CopyableCell from "@/components/dashboard/tables/CopyableCell";
 import UserFilterPopover from "@/components/dashboard/filters/UserFilterPopover";
 
 import MerchantBulkActions from "@/components/dashboard/toolbar/MerchantBulkActions";
@@ -41,7 +43,10 @@ const Tabs = ({
     const is = active === k;
     return (
       <button
+        type="button"
         onClick={() => onChange(k)}
+        role="tab"
+        aria-selected={is}
         className={`relative px-2 pb-2 text-sm ${
           is ? "text-[#0B1E5B] font-medium" : "text-gray-500"
         }`}
@@ -58,7 +63,7 @@ const Tabs = ({
   };
 
   return (
-    <div className="flex items-center gap-6">
+    <div className="flex items-center gap-6 overflow-x-auto pb-1" role="tablist" aria-label="Merchant status">
       <Tab k="verified" label="Verified" />
       <Tab k="pending" label="Pending" />
       <Tab k="rejected" label="Rejected" />
@@ -222,14 +227,15 @@ export default function MerchantManagementTab() {
       </div>
 
       {/* Search row with filter + icon-only bulk actions */}
-      <div className="mb-4 flex items-center gap-3">
-        <div className="relative w-[520px]">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="relative w-full max-w-[520px] flex-1 basis-[280px]">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by email, Name or number of branch"
-            className="w-[520px] h-[46px] rounded-md border border-gray-200 bg-white pl-9 pr-12 text-sm placeholder:text-gray-400 focus:ring-1 focus:ring-blue-500"
+            aria-label="Search merchants"
+            className="h-[46px] w-full rounded-md border border-gray-200 bg-white pl-9 pr-12 text-sm placeholder:text-gray-400 focus:ring-1 focus:ring-blue-500"
           />
           <button
             ref={filterBtnRef}
@@ -262,14 +268,15 @@ export default function MerchantManagementTab() {
         </div>
 
         {error && <div className="px-6 py-3 text-sm text-red-600">{error}</div>}
-        {loading && <div className="px-6 py-3 text-sm text-gray-500">Loading merchants…</div>}
+        {loading && <div className="px-6 py-8 text-sm text-gray-500" role="status">Loading merchants…</div>}
 
         {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+        {!loading && <div className="overflow-x-auto overscroll-x-contain" tabIndex={0} aria-label="Merchants table, horizontally scrollable">
+          <table className="w-full min-w-[1040px] table-fixed divide-y divide-gray-200">
+            <colgroup><col className="w-14"/><col className="w-[16%]"/><col className="w-[15%]"/><col className="w-[20%]"/><col className="w-[24%]"/><col className="w-[12%]"/><col className="w-[9%]"/><col className="w-28"/></colgroup>
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 sm:px-6 py-3">
+                <th className="sticky left-0 z-20 bg-gray-50 px-4 py-3 sm:px-6">
                   <input
                     type="checkbox"
                     checked={
@@ -277,6 +284,7 @@ export default function MerchantManagementTab() {
                       selected.length === items.map((i) => i.id).length
                     }
                     onChange={() => toggleAll(items.map((i) => i.id))}
+                    aria-label="Select all merchants on this page"
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                 </th>
@@ -291,7 +299,7 @@ export default function MerchantManagementTab() {
                 ].map((h) => (
                   <th
                     key={h}
-                    className="px-4 sm:px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider"
+                    className={`px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 sm:px-6 ${h === "" ? "sticky right-0 z-20 bg-gray-50" : ""}`}
                   >
                     {h}
                   </th>
@@ -303,56 +311,56 @@ export default function MerchantManagementTab() {
               {items.map((m) => (
                 <tr
                   key={m.id}
-                  className="hover:bg-gray-50 cursor-pointer"
-                  onClick={(e) => {
-                    // don’t trigger row click when clicking checkbox or actions
-                    const target = e.target as HTMLElement;
-                    if (target.closest("[data-stop]")) return;
-                    onRowClick(m);
-                  }}
+                  className="group/row hover:bg-gray-50"
                 >
-                  <td className="px-4 sm:px-6 py-4" data-stop>
+                  <td className="sticky left-0 z-10 bg-white px-4 py-4 group-hover/row:bg-gray-50 sm:px-6" data-stop>
                     <input
                       type="checkbox"
                       checked={selected.includes(m.id)}
                       onChange={() => toggleOne(m.id)}
+                      aria-label={`Select ${m.businessName || "merchant"}`}
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   </td>
 
-                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {m.businessName}
+                  <td className="px-4 py-4 text-sm font-medium text-gray-900 sm:px-6">
+                    <CopyableCell value={m.businessName} label="business name" />
                   </td>
-                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {m.phoneNumber}
+                  <td className="px-4 py-4 text-sm text-gray-700 sm:px-6">
+                    <CopyableCell value={m.phoneNumber} label="phone number" />
                   </td>
-                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {m.email}
+                  <td className="px-4 py-4 text-sm text-gray-700 sm:px-6">
+                    <CopyableCell value={m.email} label="email address" />
                   </td>
-                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {m.address}
+                  <td className="px-4 py-4 text-sm text-gray-700 sm:px-6">
+                    <CopyableCell value={m.address} label="business address" lines={2} />
                   </td>
-                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {m.lastLoginDate}
+                  <td className="px-4 py-4 text-sm text-gray-700 sm:px-6">
+                    <CopyableCell value={m.lastLoginDate} label="last login date" />
                   </td>
-                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {m.serviceTier}
+                  <td className="px-4 py-4 text-sm text-gray-900 sm:px-6">
+                    <CopyableCell value={m.serviceTier} label="service tier" />
                   </td>
 
-                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm" data-stop>
+                  <td className="sticky right-0 z-10 bg-white px-4 py-4 text-sm group-hover/row:bg-gray-50 sm:px-6" data-stop>
+                    <div className="flex items-center justify-end gap-1">
+                    <button type="button" onClick={() => onRowClick(m)} className="grid h-9 w-9 place-items-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label={`View details for ${m.businessName}`} title="View details"><Eye className="h-4 w-4"/></button>
                     <button
-                      className="p-1 hover:bg-gray-100 rounded"
+                      type="button"
+                      className="grid h-9 w-9 place-items-center rounded-md border border-gray-200 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       onClick={(e) => openRowMenu(m, e.currentTarget)}
                       aria-label="Row actions"
                     >
                       <MoreHorizontal className="h-4 w-4 text-gray-600" />
                     </button>
+                    </div>
                   </td>
                 </tr>
               ))}
+              {items.length === 0 && <tr><td colSpan={8} className="px-6 py-12 text-center text-sm text-gray-500">No merchants match the current search and filters.</td></tr>}
             </tbody>
           </table>
-        </div>
+        </div>}
 
         {/* Footer */}
         <div className="px-4 sm:px-6 py-4 border-t border-gray-200 flex items-center justify-between">

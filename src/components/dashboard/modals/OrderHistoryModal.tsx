@@ -3,6 +3,7 @@ import * as React from "react";
 import { Filter, Search as SearchIcon } from "lucide-react";
 import ModalBase from "./ModalBase";
 import { fetchUserOrders, type UserOrderRow } from "@/lib/users";
+import CopyableCell from "@/components/dashboard/tables/CopyableCell";
 
 type HistoryTab = "completed" | "ongoing" | "cancelled";
 
@@ -92,15 +93,16 @@ export default function OrderHistoryModal({
         </div>
 
         <div className="mt-4">
-          <div className="relative w-[360px]">
+          <div className="relative w-full max-w-[360px]">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search by type, date"
-              className="w-[360px] h-[40px] rounded-md border border-gray-200 bg-white pl-9 pr-10 text-sm placeholder:text-gray-400 focus:ring-1 focus:ring-blue-500"
+              aria-label="Search order history"
+              className="h-[40px] w-full rounded-md border border-gray-200 bg-white pl-9 pr-10 text-sm placeholder:text-gray-400 focus:ring-1 focus:ring-blue-500"
             />
-            <button className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-md border border-gray-200 bg-white grid place-items-center">
+            <button type="button" aria-label="Filter order history" className="absolute right-1 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-md border border-gray-200 bg-white">
               <Filter className="h-4 w-4 text-gray-500" />
             </button>
           </div>
@@ -111,7 +113,7 @@ export default function OrderHistoryModal({
         {error && <div className="mb-3 text-sm text-red-600">{error}</div>}
         {loading && <div className="mb-3 text-sm text-gray-500">Loading order history…</div>}
         <div className="overflow-x-auto rounded-xl border border-gray-200">
-          <table className="min-w-full">
+          <table className="w-full min-w-[680px] table-fixed">
             <thead className="bg-gray-50">
               <tr>
                 {["Type", "Amount", "Merchant", "Date and Time", "Rider"].map((h, i) => (
@@ -124,11 +126,11 @@ export default function OrderHistoryModal({
             <tbody className="bg-white">
               {filteredRows.map((r) => (
                 <tr key={r.id} className="border-t border-gray-100">
-                  <td className="px-4 py-3 text-sm text-gray-900">{r.type}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{r.amount}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{r.merchant}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{r.date} &nbsp; {r.time}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{r.rider}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900"><CopyableCell value={r.type} label="order type" /></td>
+                  <td className="px-4 py-3 text-sm text-gray-900"><CopyableCell value={r.amount} label="amount" /></td>
+                  <td className="px-4 py-3 text-sm text-gray-900"><CopyableCell value={r.merchant} label="merchant" /></td>
+                  <td className="px-4 py-3 text-sm text-gray-900"><CopyableCell value={`${r.date} ${r.time}`} label="date and time" /></td>
+                  <td className="px-4 py-3 text-sm text-gray-900"><CopyableCell value={r.rider} label="rider" /></td>
                 </tr>
               ))}
               {!loading && filteredRows.length === 0 && (

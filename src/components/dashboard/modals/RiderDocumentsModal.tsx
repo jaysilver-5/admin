@@ -26,7 +26,7 @@ export default function RiderDocumentsModal({
     <>
       <div className="fixed inset-0 z-[100] flex items-center justify-center" role="dialog" aria-modal="true">
         <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-        <div className="relative w-[540px] rounded-2xl bg-white shadow-xl overflow-hidden">
+        <div className="relative max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-[540px] overflow-y-auto rounded-2xl bg-white shadow-xl">
           <button onClick={onClose} aria-label="Close" className="absolute right-4 top-4 h-8 w-8 rounded-full grid place-items-center text-gray-500 hover:bg-gray-100">×</button>
 
           <div className="px-6 pt-6 pb-2">

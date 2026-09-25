@@ -11,12 +11,15 @@ export default function MobileTabs({
   onSelect: (name: string) => void;
 }) {
   return (
-    <div className="lg:hidden sticky top-16 z-30 bg-[#F7F8FA] px-4 py-3 border-b border-gray-200">
-      <div className="flex gap-2 overflow-x-auto no-scrollbar">
+    <div className="sticky top-16 z-30 border-b border-gray-200 bg-[#F7F8FA] px-4 py-3 lg:hidden">
+      <div className="relative after:pointer-events-none after:absolute after:inset-y-0 after:right-0 after:w-10 after:bg-gradient-to-l after:from-[#F7F8FA] after:to-transparent">
+      <div className="flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label="Admin sections">
         {items.map((it) => (
           <button
             key={it.name}
             onClick={() => onSelect(it.name)}
+            role="tab"
+            aria-selected={active === it.name}
             className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm border
               ${
                 active === it.name
@@ -25,9 +28,10 @@ export default function MobileTabs({
               }`}
           >
             {it.icon}
-            <span>{it.name}</span>
+            <span className="whitespace-nowrap">{it.name}</span>
           </button>
         ))}
+      </div>
       </div>
     </div>
   );

@@ -38,6 +38,8 @@ export default function Pagination({
     <button
       key={n}
       onClick={() => onChange(n)}
+      aria-label={`Go to page ${n}`}
+      aria-current={n === page ? "page" : undefined}
       className={`h-10 w-10 min-w-9 px-3 rounded-full text-sm transition border
         ${
           n === page
@@ -53,7 +55,7 @@ export default function Pagination({
     <div className={`flex items-center gap-2 ${className}`}>
       <button
         onClick={() => onChange(Math.max(1, page - 1))}
-        className="h-10 w-10 rounded-full border bg-[#91ADF6] border-gray-200 hover:bg-gray-50 grid place-items-center"
+        className="grid h-10 w-10 place-items-center rounded-full border border-gray-200 bg-[#91ADF6] transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-50"
         aria-label="Previous"
         disabled={page === 1}
       >
@@ -81,7 +83,7 @@ export default function Pagination({
 
       <button
         onClick={() => onChange(Math.min(totalPages, page + 1))}
-        className="h-10 w-10 rounded-full border border-gray-200 bg-[#91ADF6] hover:bg-gray-50 grid place-items-center"
+        className="grid h-10 w-10 place-items-center rounded-full border border-gray-200 bg-[#91ADF6] transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-50"
         aria-label="Next"
         disabled={page === totalPages}
       >

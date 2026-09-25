@@ -10,6 +10,7 @@ export default function ModalBase({
   z = 100, // <— stack level (confirm will pass a higher one)
   children,
   hideClose = false,
+  ariaLabel = "Dialog",
 }: {
   open: boolean;
   onClose: () => void;
@@ -17,9 +18,13 @@ export default function ModalBase({
   z?: number;
   children: React.ReactNode;
   hideClose?: boolean;
+  ariaLabel?: string;
 }) {
   const [mounted, setMounted] = React.useState(false);
   const [el] = React.useState(() => document.createElement("div"));
+  const panelRef = React.useRef<HTMLDivElement | null>(null);
+  const closeRef = React.useRef(onClose);
+  React.useEffect(() => { closeRef.current = onClose; }, [onClose]);
 
   React.useEffect(() => {
     setMounted(true);
@@ -29,6 +34,45 @@ export default function ModalBase({
       document.body.removeChild(el);
     };
   }, [el]);
+
+  React.useEffect(() => {
+    if (!open || !mounted) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const panel = panelRef.current;
+    const focusable = () => Array.from(panel?.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ) || []);
+    (focusable()[0] || panel)?.focus();
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeRef.current();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const items = focusable();
+      if (!items.length) {
+        event.preventDefault();
+        panel?.focus();
+        return;
+      }
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      previous?.focus();
+    };
+  }, [open, mounted]);
 
   if (!open || !mounted) return null;
 
@@ -46,6 +90,9 @@ export default function ModalBase({
       style={{ zIndex: z + 1 }}
       aria-modal
       role="dialog"
+      aria-label={ariaLabel}
+      ref={panelRef}
+      tabIndex={-1}
     >
       <div
         className="relative w-full bg-white rounded-2xl shadow-2xl"

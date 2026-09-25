@@ -3,6 +3,8 @@
 import * as React from 'react';
 import { Pencil, Settings2, ChevronDown, X } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import CopyableCell from '@/components/dashboard/tables/CopyableCell';
+import ModalBase from '@/components/dashboard/modals/ModalBase';
 
 /* ----------------------------- helpers / types ----------------------------- */
 type Period = 'Today' | 'This Week' | 'This Month' | 'This Year';
@@ -76,15 +78,8 @@ function ModalShell({
   widthClass?: string;
   children: React.ReactNode;
 }) {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-[80]">
-      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-      <div className={`absolute left-1/2 top-10 -translate-x-1/2 rounded-2xl bg-white shadow-xl w-[92vw] ${widthClass}`}>
-        {children}
-      </div>
-    </div>
-  );
+  const width = Number(widthClass.match(/\d+/)?.[0] || 720);
+  return <ModalBase open={open} onClose={onClose} width={width} z={80} ariaLabel="Referral dialog"><div className="max-h-[calc(100vh-2rem)] overflow-y-auto">{children}</div></ModalBase>;
 }
 
 function EditRewardModal({
@@ -166,7 +161,7 @@ function SettingsHistoryModal({
 
         {/* borderless list */}
         <div className="mt-6 overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse">
+          <table className="w-full table-fixed text-left text-sm border-collapse">
             <thead>
               <tr className="text-gray-500">
                 <th className="py-2 px-3 font-normal">Initial Amount</th>
@@ -178,10 +173,10 @@ function SettingsHistoryModal({
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id} className="hover:bg-gray-50">
-                  <td className="py-3 px-3 text-gray-900">{naira0(r.initialAmount)}</td>
-                  <td className="py-3 px-3 text-gray-900">{r.adminName}</td>
-                  <td className="py-3 px-3 text-gray-900">{fmtDT(r.changedAtISO)}</td>
-                  <td className="py-3 px-3 text-gray-900">{naira0(r.updatedAmount)}</td>
+                  <td className="py-3 px-3 text-gray-900"><CopyableCell value={naira0(r.initialAmount)} label="initial amount" /></td>
+                  <td className="py-3 px-3 text-gray-900"><CopyableCell value={r.adminName} label="administrator name" /></td>
+                  <td className="py-3 px-3 text-gray-900"><CopyableCell value={fmtDT(r.changedAtISO)} label="date and time" /></td>
+                  <td className="py-3 px-3 text-gray-900"><CopyableCell value={naira0(r.updatedAmount)} label="updated amount" /></td>
                 </tr>
               ))}
             </tbody>
@@ -213,7 +208,7 @@ function ReferralListModal({
 
         {/* borderless list */}
         <div className="mt-6 overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse">
+          <table className="w-full table-fixed text-left text-sm border-collapse">
             <thead>
               <tr className="text-gray-500">
                 <th className="py-2 px-3 font-normal">Referral Name</th>
@@ -225,10 +220,10 @@ function ReferralListModal({
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id} className="hover:bg-gray-50">
-                  <td className="py-3 px-3 text-gray-900">{r.name}</td>
-                  <td className="py-3 px-3 text-gray-900">{r.email}</td>
-                  <td className="py-3 px-3 text-gray-900">{r.activeCount}</td>
-                  <td className="py-3 px-3 text-gray-900">{naira0(r.rewardEarned)}</td>
+                  <td className="py-3 px-3 text-gray-900"><CopyableCell value={r.name} label="referral name" /></td>
+                  <td className="py-3 px-3 text-gray-900"><CopyableCell value={r.email} label="email address" /></td>
+                  <td className="py-3 px-3 text-gray-900"><CopyableCell value={r.activeCount} label="active referral count" /></td>
+                  <td className="py-3 px-3 text-gray-900"><CopyableCell value={naira0(r.rewardEarned)} label="reward earned" /></td>
                 </tr>
               ))}
             </tbody>
@@ -297,18 +292,16 @@ export function ReferralHeader({
       </div>
 
       {/* Metrics with dotted separators (no cards) */}
-      <div className="flex items-start gap-8">
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         {/* Left spacer/divider to align with screenshot */}
 
-        <div className="flex flex-1 items-start gap-8 w-full justify-between">
+        <div className="contents">
           <MetricInline
             label="Total Referrals"
             value={totals.totalReferrals.toLocaleString()}
             period={periodA}
             onPeriod={setPeriodA}
           />
-
-          <div className="hidden sm:block h-[84px] w-px border-r border-dashed border-gray-300" />
 
           <MetricInline
             label="Total Rewards Paid Out"
@@ -317,8 +310,6 @@ export function ReferralHeader({
             period={periodB}
             onPeriod={setPeriodB}
           />
-
-          <div className="hidden sm:block h-[84px] w-px border-r border-dashed border-gray-300" />
 
           <MetricInline
             label="Total Referrals"
@@ -402,7 +393,7 @@ export default function ReferralTab() {
         <div className="mb-3 font-medium text-gray-900">Referral Details</div>
         <div className="rounded-xl bg-white">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse">
+            <table className="w-full table-fixed text-left text-sm border-collapse">
               <thead className=' border rounded-2xl border-gray-200'>
                 <tr className="text-gray-500">
                   <th className="py-3 px-4 font-normal">Referrer Name</th>
@@ -418,10 +409,10 @@ export default function ReferralTab() {
                     className="hover:bg-gray-50 cursor-pointer"
                     onClick={() => setListOpen(true)}
                   >
-                    <td className="py-3 px-4 text-gray-900">{r.referrerName}</td>
-                    <td className="py-3 px-4 text-gray-900">{r.referredName}</td>
-                    <td className="py-3 px-4 text-gray-900">{fmtDT(r.dateISO)}</td>
-                    <td className="py-3 px-4 text-gray-900">{naira0(r.rewardAmount)}</td>
+                    <td className="py-3 px-4 text-gray-900"><CopyableCell value={r.referrerName} label="referrer name" /></td>
+                    <td className="py-3 px-4 text-gray-900"><CopyableCell value={r.referredName} label="referred user name" /></td>
+                    <td className="py-3 px-4 text-gray-900"><CopyableCell value={fmtDT(r.dateISO)} label="referral date" /></td>
+                    <td className="py-3 px-4 text-gray-900"><CopyableCell value={naira0(r.rewardAmount)} label="reward amount" /></td>
                   </tr>
                 ))}
               </tbody>
@@ -471,7 +462,7 @@ function MetricInline({
   onPeriod: (p: Period) => void;
 }) {
   return (
-    <div className="min-w-[220px]">
+    <div className="min-w-0 rounded-xl border border-dashed border-gray-200 p-4">
       <div className="flex items-center justify-between text-sm text-gray-600">
         <span>{label}</span>
         <PeriodPill value={period} onChange={onPeriod} />

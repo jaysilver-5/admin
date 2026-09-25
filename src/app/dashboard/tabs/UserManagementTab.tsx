@@ -105,13 +105,14 @@ export default function UserManagementTab() {
     <div className="bg-transparent relative">
       {/* Search */}
       <div className="mb-4">
-        <div className="relative w-[440px]">
+        <div className="relative w-full max-w-[440px]">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by email, Name or wallet balance"
-            className="w-[440px] h-[46px] rounded-md border border-gray-200 bg-white pl-9 pr-12 text-sm placeholder:text-gray-400 focus:ring-1 focus:ring-blue-500"
+            aria-label="Search users"
+            className="h-[46px] w-full rounded-md border border-gray-200 bg-white pl-9 pr-12 text-sm placeholder:text-gray-400 focus:ring-1 focus:ring-blue-500"
           />
           <button
             ref={filterBtnRef}
@@ -138,21 +139,19 @@ export default function UserManagementTab() {
         </div>
 
         {error && <div className="px-6 py-3 text-sm text-red-600">{error}</div>}
-        {loading && <div className="px-6 py-3 text-sm text-gray-500">Loading users…</div>}
+        {loading && <div className="px-6 py-8 text-sm text-gray-500" role="status">Loading users…</div>}
 
-        <UserTable
+        {!loading && <UserTable
           users={items}
           onRowOpenHistory={(u) => {
             setCurrentUser(u);
             setHistoryOpen(true);
           }}
           onAction={requestToggle} // ← suspend/activate entry point
-        />
+        />}
 
         <div className="px-4 sm:px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-          <span className="text-sm text-gray-500">
-            Showing {(safePage - 1) * perPage + 1} to {Math.min(safePage * perPage, total)} of {total} entries
-          </span>
+          <span className="hidden text-sm text-gray-500 sm:inline">Page {safePage} of {totalPages}</span>
           <Pagination page={safePage} totalPages={totalPages} onChange={setPage} />
         </div>
       </div>

@@ -22,7 +22,10 @@ export default function UserTabs({
     const isActive = active === id;
     return (
       <button
+        type="button"
         onClick={() => onChange(id)}
+        role="tab"
+        aria-selected={isActive}
         className={`relative px-2 py-2 text-sm font-medium ${
           isActive ? "text-gray-900" : "text-gray-500 hover:text-gray-700"
         }`}
@@ -41,7 +44,7 @@ export default function UserTabs({
   };
 
   return (
-    <div className="flex items-center gap-6 border-b border-gray-200">
+    <div className="flex items-center gap-6 overflow-x-auto border-b border-gray-200" role="tablist" aria-label="User status">
       <Tab id="all" label="All users list" count={counts.all} />
       <Tab id="new" label="New User" count={counts.new} />
     </div>
