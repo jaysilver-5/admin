@@ -13,6 +13,7 @@ import ConfirmMerchantActionModal from "@/components/dashboard/modals/ConfirmMer
 import MerchantProfileModal from "@/components/dashboard/modals/MerchantProfileModal"; // reuse profile shell
 import RiderDocumentsModal from "@/components/dashboard/modals/RiderDocumentsModal";
 import { TableLoadingState } from "@/components/dashboard/ui/LoadingState";
+import RiderDispatchWorkspace from "@/components/dashboard/riders/RiderDispatchWorkspace";
 import { formatNigerianPhone } from "@/lib/api";
 
 import {
@@ -69,7 +70,12 @@ const Tabs = ({
 };
 
 /* --------------------------- Main Component --------------------------- */
-export default function RiderManagementTab() {
+export default function RiderManagementTab({ permissions = [] }: { permissions?: string[] }) {
+  const granted = React.useMemo(() => new Set(permissions), [permissions]);
+  const canViewDispatch = granted.has("orders.read") && granted.has("riders.read");
+  const [workspace, setWorkspace] = React.useState<"dispatch" | "directory">(
+    canViewDispatch ? "dispatch" : "directory",
+  );
   // query state
   const [tab, setTab] = React.useState<RiderStatus>("verified");
   const [search, setSearch] = React.useState("");
@@ -200,6 +206,12 @@ export default function RiderManagementTab() {
 
   return (
     <div className="bg-transparent">
+      <div className="mb-5 flex w-fit rounded-lg border border-gray-200 bg-white p-1 shadow-sm" role="tablist" aria-label="Rider management workspace">
+        {canViewDispatch && <button type="button" role="tab" aria-selected={workspace === "dispatch"} onClick={() => setWorkspace("dispatch")} className={`rounded-md px-4 py-2 text-sm font-semibold transition ${workspace === "dispatch" ? "bg-[#0B1E5B] text-white" : "text-gray-600 hover:bg-gray-50"}`}>Dispatch workspace</button>}
+        <button type="button" role="tab" aria-selected={workspace === "directory"} onClick={() => setWorkspace("directory")} className={`rounded-md px-4 py-2 text-sm font-semibold transition ${workspace === "directory" ? "bg-[#0B1E5B] text-white" : "text-gray-600 hover:bg-gray-50"}`}>Rider directory</button>
+      </div>
+
+      {workspace === "dispatch" && canViewDispatch ? <RiderDispatchWorkspace permissions={permissions} /> : <>
       {/* Tabs */}
       <div className="mb-4">
         <Tabs active={tab} onChange={setTab} counts={counts} />
@@ -426,6 +438,7 @@ export default function RiderManagementTab() {
         onCancel={() => setConfirmOpen(false)}
         onConfirm={applyStatus}
       />
+      </>}
     </div>
   );
 }
