@@ -2,7 +2,7 @@
 import * as React from "react";
 import { History, UserMinus } from "lucide-react";
 import type { User } from "@/lib/users";
-import { formatNigerianPhone } from "@/lib/api";
+import { formatNaira, formatNigerianPhone } from "@/lib/api";
 import CopyableCell from "./CopyableCell";
 
 export default function UserTable({
@@ -19,8 +19,6 @@ export default function UserTable({
     setSelected((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
   const toggleAll = () =>
     setSelected(selected.length === users.length ? [] : users.map((u) => u.id));
-  const fmt = (n: number) => `₦${n.toLocaleString()}`;
-
   // Prevent row click from firing
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
@@ -102,7 +100,7 @@ export default function UserTable({
 
                 {/* wallet */}
                 <td className="px-3 py-3 text-sm font-medium text-gray-900">
-                  <CopyableCell value={fmt(u.walletBalance)} label="wallet balance" />
+                  <CopyableCell value={formatNaira(u.walletBalance)} label="wallet balance" />
                 </td>
 
                 {/* last login */}
