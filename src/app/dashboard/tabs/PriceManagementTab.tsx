@@ -21,6 +21,14 @@ type PriceTab = "users" | "merchant" | "riders";
 type SpeedFee = { id?: string; deliveryType: "EXPRESS" | "SUPER_EXPRESS"; percentage: number; maxDurationMinutes: number; isActive: boolean };
 type Commission = { id?: string; planCategory: "EXCLUSIVE" | "PREMIUM" | "BASIC"; commissionPercent: number; isActive?: boolean };
 type DistanceTier = { id: string; minKm: number; maxKm: number; amount: number; isActive?: boolean };
+type ServiceType = "WASH_AND_IRON" | "STEAM_WASH" | "STARCH";
+type ClothType = { id: string; key: string; displayName: string; supportedServices: ServiceType[]; isActive: boolean; sortOrder: number };
+
+const serviceLabels: Record<ServiceType, string> = {
+  WASH_AND_IRON: "Wash & Iron",
+  STEAM_WASH: "Steam washing",
+  STARCH: "Starching",
+};
 
 const HeaderTabs = ({ active, onChange }: { active: PriceTab; onChange: (t: PriceTab) => void }) => {
   const Tab = ({ k, label }: { k: PriceTab; label: string }) => {
@@ -89,14 +97,37 @@ const UsersTab = () => {
 
 const MerchantTab = () => {
   const [tiers, setTiers] = React.useState<Record<Commission["planCategory"], number>>({ EXCLUSIVE: 25, PREMIUM: 25, BASIC: 25 });
+  const [clothTypes, setClothTypes] = React.useState<ClothType[]>([]);
+  const [newClothType, setNewClothType] = React.useState("");
+  const [newServices, setNewServices] = React.useState<ServiceType[]>(["WASH_AND_IRON"]);
   const [saving, setSaving] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    apiFetch<Commission[]>("/admin/config/merchant-commissions").then((rows) => {
-      setTiers((prev) => ({ ...prev, ...Object.fromEntries(rows.map((r) => [r.planCategory, Number(r.commissionPercent || 0)])) } as any));
-    }).catch((err) => setMessage(err?.message || "Unable to load merchant percentages"));
+    Promise.all([
+      apiFetch<Commission[]>("/admin/config/merchant-commissions"),
+      apiFetch<ClothType[]>("/admin/config/cloth-types"),
+    ]).then(([commissions, catalog]) => {
+      setTiers((prev) => ({ ...prev, ...Object.fromEntries(commissions.map((r) => [r.planCategory, Number(r.commissionPercent || 0)])) } as any));
+      setClothTypes(catalog);
+    }).catch((err) => setMessage(err?.message || "Unable to load merchant pricing settings"));
   }, []);
+
+  const addClothType = async () => {
+    if (!newClothType.trim() || newServices.length === 0) return;
+    setSaving(true); setMessage(null);
+    try {
+      await apiFetch("/admin/config/cloth-types", {
+        method: "POST",
+        body: JSON.stringify({ displayName: newClothType.trim(), supportedServices: newServices }),
+      });
+      setClothTypes(await apiFetch<ClothType[]>("/admin/config/cloth-types"));
+      setNewClothType("");
+      setNewServices(["WASH_AND_IRON"]);
+      setMessage("Clothes type added. Merchants will be prompted to price it before going online.");
+    } catch (err: any) { setMessage(err?.message || "Unable to add clothes type"); }
+    finally { setSaving(false); }
+  };
 
   const save = async () => {
     setSaving(true); setMessage(null);
@@ -107,7 +138,7 @@ const MerchantTab = () => {
     finally { setSaving(false); }
   };
 
-  return <div className="mt-6 max-w-[580px] space-y-5">
+  return <div className="mt-6 max-w-[760px] space-y-5">
     <div className="rounded-lg border border-amber-100 bg-amber-50 p-4 text-sm text-amber-950">
       <div className="font-semibold">Merchant commission retained by Clothify</div>
       <p className="mt-1 text-amber-900/80">This percentage is deducted from the merchant&apos;s service subtotal. It does not include rider logistics or the customer&apos;s Express speed fee.</p>
@@ -118,6 +149,31 @@ const MerchantTab = () => {
       <label key={key} className="block text-[12px] text-gray-600">{label}<div className="relative mt-1"><input type="number" min="0" max="100" step="0.1" value={tiers[key as Commission["planCategory"]]} onChange={(e) => setTiers((p) => ({ ...p, [key]: Number(e.target.value) }))} className="h-11 w-full rounded-md border border-gray-300 px-3 pr-9 text-sm" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">%</span></div></label>
     ))}
     <div className="pt-2"><button disabled={saving} onClick={save} className="h-11 w-full rounded-md bg-[#0B1E5B] text-white font-semibold">{saving ? "Updating…" : "Save merchant commissions"}</button></div>
+
+    <div className="border-t border-gray-200 pt-6">
+      <h3 className="text-lg font-semibold text-gray-900">Clothes catalogue</h3>
+      <p className="mt-1 text-sm text-gray-500">These clothes types appear in every merchant&apos;s service-price list.</p>
+      <div className="mt-4 overflow-hidden rounded-xl border border-gray-200">
+        {clothTypes.map((item) => (
+          <div key={item.id} className="flex items-center justify-between gap-4 border-b border-gray-100 px-4 py-3 last:border-b-0">
+            <div><div className="font-medium text-gray-900">{item.displayName}</div><div className="mt-1 text-xs text-gray-500">{item.supportedServices.map((service) => serviceLabels[service]).join(" · ")}</div></div>
+            <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${item.isActive ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-500"}`}>{item.isActive ? "Active" : "Inactive"}</span>
+          </div>
+        ))}
+        {clothTypes.length === 0 && <div className="px-4 py-8 text-center text-sm text-gray-500">No clothes types configured.</div>}
+      </div>
+      <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+        <label className="text-xs font-medium text-gray-700">New clothes type<input value={newClothType} onChange={(event) => setNewClothType(event.target.value)} maxLength={80} placeholder="e.g. Cardigan" className="mt-1 h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm" /></label>
+        <div className="mt-3 text-xs font-medium text-gray-700">Services merchants can price</div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {(Object.keys(serviceLabels) as ServiceType[]).map((service) => {
+            const selected = newServices.includes(service);
+            return <button key={service} type="button" onClick={() => setNewServices((current) => selected ? current.filter((item) => item !== service) : [...current, service])} className={`rounded-full border px-3 py-2 text-xs font-medium ${selected ? "border-[#0B1E5B] bg-blue-50 text-[#0B1E5B]" : "border-gray-300 bg-white text-gray-600"}`}>{serviceLabels[service]}</button>;
+          })}
+        </div>
+        <button type="button" disabled={saving || !newClothType.trim() || newServices.length === 0} onClick={() => void addClothType()} className="mt-4 inline-flex h-11 items-center gap-2 rounded-md bg-[#0B1E5B] px-4 text-sm font-semibold text-white disabled:opacity-50"><Plus className="h-4 w-4" />Add clothes type</button>
+      </div>
+    </div>
   </div>;
 };
 

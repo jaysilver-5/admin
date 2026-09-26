@@ -22,7 +22,7 @@ export default function MerchantProfileModal({
   merchant?: Merchant;
   onPrimaryAction: () => void; // opens stacked confirm
 }) {
-  const [openIdx, setOpenIdx] = React.useState<0 | 1 | 2>(0);
+  const [openIdx, setOpenIdx] = React.useState<0 | 1 | 2 | 3>(3);
   const [month, setMonth] = React.useState("January");
   const [year, setYear] = React.useState("2025");
   if (!open || !merchant) return null;
@@ -50,7 +50,7 @@ export default function MerchantProfileModal({
     title,
     children,
   }: {
-    i: 0 | 1 | 2;
+    i: 0 | 1 | 2 | 3;
     title: string;
     children: React.ReactNode;
   }) => (
@@ -122,6 +122,19 @@ export default function MerchantProfileModal({
 
         {/* Sections */}
         <div className="mt-6 space-y-3">
+          <Section i={3} title="About, services and reviews">
+            <div className="text-sm leading-6 text-gray-600">{(merchant as any).raw?.description || "No business description supplied."}</div>
+            <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-500">Published service prices</div>
+            <div className="mt-2 space-y-2">
+              {((merchant as any).raw?.prices || []).map((price: any) => <div key={price.id} className="flex items-center justify-between gap-4 rounded-lg bg-gray-50 px-3 py-2 text-sm"><span>{price.clothType?.displayName || "Clothes"} · {String(price.serviceType || "").replaceAll("_", " ")}</span><span className="font-semibold text-gray-900">{formatNaira(price.pricePerUnit)}</span></div>)}
+              {!((merchant as any).raw?.prices || []).length && <div className="text-sm text-amber-700">The merchant has not published a price list.</div>}
+            </div>
+            <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-500">Recent reviews</div>
+            <div className="mt-2 space-y-2">
+              {((merchant as any).raw?.reviews || []).map((review: any) => <div key={review.id} className="rounded-lg border border-gray-100 p-3 text-sm"><div className="font-medium text-gray-900">{review.user?.fullName || "Customer"} · {review.rating}/5</div><div className="mt-1 text-gray-600">{review.comment || "No written comment."}</div></div>)}
+              {!((merchant as any).raw?.reviews || []).length && <div className="text-sm text-gray-500">No customer reviews yet.</div>}
+            </div>
+          </Section>
           <Section i={0} title="Earnings Details">
             <div className="flex items-center gap-2 mb-3">
               <Pill>

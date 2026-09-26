@@ -394,10 +394,15 @@ export default function MerchantManagementTab() {
         anchor={menuCoords}
         status={(menuMerchant?.status ?? "verified") as MerchantStatus}
         onClose={() => setMenuOpen(false)}
-        onViewProfile={() => {
+        onViewProfile={async () => {
           if (!menuMerchant) return;
           setCurrent(menuMerchant);
           setProfileOpen(true);
+          try {
+            setCurrent(await fetchMerchantDetail(menuMerchant.id));
+          } catch {
+            // Keep the table summary visible if the detail request fails.
+          }
         }}
         onUpgrade={() => {
           // TODO: navigate/show upgrade UI
