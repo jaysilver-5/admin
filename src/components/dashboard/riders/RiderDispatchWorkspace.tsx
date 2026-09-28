@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import {
-  AlertTriangle, Bike, CalendarClock, CheckCircle2, Clock3, MapPin,
+  AlertTriangle, ArrowLeft, Bike, CalendarClock, CheckCircle2, Clock3, MapPin,
   Phone, RefreshCw, Search, Settings2, UserRound,
 } from "lucide-react";
 import {
@@ -205,24 +205,16 @@ export default function RiderDispatchWorkspace({ permissions = [] }: { permissio
   };
 
   return (
-    <div className="flex min-h-[620px] flex-col gap-3 lg:h-[calc(100dvh-11rem)] lg:overflow-hidden">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm" role="tablist" aria-label="Dispatch tools">
-          <button type="button" role="tab" aria-selected={workspaceTab === "dispatch"} onClick={() => setWorkspaceTab("dispatch")} className={`rounded-md px-4 py-2 text-sm font-semibold ${workspaceTab === "dispatch" ? "bg-[#0B1E5B] text-white" : "text-gray-600 hover:bg-gray-50"}`}>Live dispatches</button>
-          {canViewSettings && <button type="button" role="tab" aria-selected={workspaceTab === "radar"} onClick={() => setWorkspaceTab("radar")} className={`rounded-md px-4 py-2 text-sm font-semibold ${workspaceTab === "radar" ? "bg-[#0B1E5B] text-white" : "text-gray-600 hover:bg-gray-50"}`}>Radar settings</button>}
-        </div>
-        {workspaceTab === "dispatch" && <button type="button" onClick={() => void loadAlerts()} disabled={loadingAlerts} className="inline-flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"><RefreshCw className={`h-4 w-4 ${loadingAlerts ? "animate-spin" : ""}`} /> Refresh</button>}
-      </div>
-
+    <div className="flex min-h-[620px] flex-col gap-3 lg:h-[calc(100dvh-9.75rem)] lg:overflow-hidden">
       {error && <ErrorBanner>{error}</ErrorBanner>}
       {success && <div role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{success}</div>}
 
       {workspaceTab === "radar" ? (
         <section className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
           <div className="mx-auto max-w-4xl">
-            <div className="flex items-start gap-3">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-blue-50 text-[#0B1E5B]"><Settings2 className="h-5 w-5" /></span>
-              <div><h2 className="text-lg font-semibold text-gray-950">Rider search radar</h2><p className="mt-1 text-sm text-gray-500">Start nearby and double the radius only when no eligible rider is found.</p></div>
+            <div className="flex flex-col items-start justify-between gap-4 sm:flex-row">
+              <div className="flex items-start gap-3"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-blue-50 text-[#0B1E5B]"><Settings2 className="h-5 w-5" /></span><div><h2 className="text-lg font-semibold text-gray-950">Rider search radar</h2><p className="mt-1 text-sm text-gray-500">Start nearby and expand the radius only when no eligible rider is found.</p></div></div>
+              <button type="button" onClick={() => setWorkspaceTab("dispatch")} className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"><ArrowLeft className="h-4 w-4" />Back to dispatch</button>
             </div>
             <div className="mt-7 grid gap-4 md:grid-cols-3">
               <label className="rounded-xl border border-blue-200 bg-blue-50/40 p-4 text-sm font-semibold text-gray-800">Initial radius <span className="ml-1 rounded-full bg-blue-100 px-2 py-0.5 text-[11px] text-blue-800">Recommended: 5 km</span><input aria-label="Initial search radius in kilometres" type="number" min="0.1" step="0.1" value={settings.initialRadiusKm} onChange={(event) => setSettings((current) => ({ ...current, initialRadiusKm: Number(event.target.value) }))} className="mt-3 h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-base outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /><span className="mt-2 block text-xs font-normal text-gray-500">The first and fastest search area.</span></label>
@@ -243,7 +235,7 @@ export default function RiderDispatchWorkspace({ permissions = [] }: { permissio
       ) : (
         <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
           <section className="flex min-h-0 flex-col rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-            <div className="flex items-center gap-2"><span className="grid h-9 w-9 place-items-center rounded-lg bg-amber-50 text-amber-700"><AlertTriangle className="h-5 w-5" /></span><div><h2 className="font-semibold text-gray-950">Needs attention</h2><p className="text-xs text-gray-500">{alerts.length} unresolved dispatch{alerts.length === 1 ? "" : "es"}</p></div></div>
+            <div className="flex items-center justify-between gap-2"><div className="flex min-w-0 items-center gap-2"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-amber-50 text-amber-700"><AlertTriangle className="h-5 w-5" /></span><div className="min-w-0"><h2 className="font-semibold text-gray-950">Needs attention</h2><p className="truncate text-xs text-gray-500">{alerts.length} unresolved dispatch{alerts.length === 1 ? "" : "es"}</p></div></div><div className="flex shrink-0 items-center gap-1">{canViewSettings && <button type="button" onClick={() => setWorkspaceTab("radar")} className="grid h-9 w-9 place-items-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-[#0B1E5B]" aria-label="Open radar settings" title="Radar settings"><Settings2 className="h-4 w-4" /></button>}<button type="button" onClick={() => void loadAlerts()} disabled={loadingAlerts} className="grid h-9 w-9 place-items-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-[#0B1E5B] disabled:opacity-50" aria-label="Refresh dispatches" title="Refresh dispatches"><RefreshCw className={`h-4 w-4 ${loadingAlerts ? "animate-spin" : ""}`} /></button></div></div>
             <div className="relative mt-3"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search order or customer" className="h-10 w-full rounded-lg border border-gray-200 pl-9 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></div>
             <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
               {loadingAlerts && <div className="py-10 text-center text-sm text-gray-500">Loading dispatches…</div>}

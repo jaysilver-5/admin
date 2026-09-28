@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Eye, Filter, MoreHorizontal, Search as SearchIcon } from "lucide-react";
+import { Eye, Filter, MoreHorizontal, Radio, Search as SearchIcon, UsersRound } from "lucide-react";
 
 import Pagination from "@/components/dashboard/tables/Pagination";
 import CopyableCell from "@/components/dashboard/tables/CopyableCell";
@@ -206,9 +206,9 @@ export default function RiderManagementTab({ permissions = [] }: { permissions?:
 
   return (
     <div className="bg-transparent">
-      <div className="mb-5 flex w-fit rounded-lg border border-gray-200 bg-white p-1 shadow-sm" role="tablist" aria-label="Rider management workspace">
-        {canViewDispatch && <button type="button" role="tab" aria-selected={workspace === "dispatch"} onClick={() => setWorkspace("dispatch")} className={`rounded-md px-4 py-2 text-sm font-semibold transition ${workspace === "dispatch" ? "bg-[#0B1E5B] text-white" : "text-gray-600 hover:bg-gray-50"}`}>Dispatch workspace</button>}
-        <button type="button" role="tab" aria-selected={workspace === "directory"} onClick={() => setWorkspace("directory")} className={`rounded-md px-4 py-2 text-sm font-semibold transition ${workspace === "directory" ? "bg-[#0B1E5B] text-white" : "text-gray-600 hover:bg-gray-50"}`}>Rider directory</button>
+      <div className="mb-4 flex items-center gap-1 border-b border-gray-200" role="tablist" aria-label="Rider views">
+        {canViewDispatch && <button type="button" role="tab" aria-selected={workspace === "dispatch"} onClick={() => setWorkspace("dispatch")} className={`relative inline-flex h-11 items-center gap-2 px-3 text-sm font-semibold transition ${workspace === "dispatch" ? "text-[#0B1E5B]" : "text-gray-500 hover:text-gray-800"}`}><Radio className="h-4 w-4" />Dispatch{workspace === "dispatch" && <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-[#0B1E5B]" />}</button>}
+        <button type="button" role="tab" aria-selected={workspace === "directory"} onClick={() => setWorkspace("directory")} className={`relative inline-flex h-11 items-center gap-2 px-3 text-sm font-semibold transition ${workspace === "directory" ? "text-[#0B1E5B]" : "text-gray-500 hover:text-gray-800"}`}><UsersRound className="h-4 w-4" />Directory{workspace === "directory" && <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-[#0B1E5B]" />}</button>
       </div>
 
       {workspace === "dispatch" && canViewDispatch ? <RiderDispatchWorkspace permissions={permissions} /> : <>
