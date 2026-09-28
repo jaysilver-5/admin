@@ -19,6 +19,7 @@ import {
 import Sidebar from "@/components/dashboard/layout/Sidebar";
 import MobileTabs from "@/components/dashboard/layout/MobileTabs";
 import { PageLoadingState } from "@/components/dashboard/ui/LoadingState";
+import AdminNotificationBell from "@/components/dashboard/AdminNotificationBell";
 
 import HomeTab from "./tabs/HomeTab";
 import UserManagementTab from "./tabs/UserManagementTab";
@@ -221,9 +222,7 @@ export default function DashboardPage() {
               <p className="truncate text-sm font-semibold text-gray-900">{activeTab.name}</p>
             </div>
             <div className="flex items-center gap-4">
-              <button aria-label="Notifications" className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <Bell className="h-6 w-6" />
-              </button>
+              <AdminNotificationBell />
               <button
                 onClick={() => {
                   clearSession();
