@@ -36,6 +36,7 @@ export interface DispatchRiderCandidate {
 export interface RiderDispatchSettings {
   initialRadiusKm: number;
   maxRadiusKm: number;
+  waveSize: number;
 }
 
 type UnknownRecord = Record<string, any>;
@@ -173,6 +174,7 @@ export async function fetchRiderDispatchSettings(): Promise<RiderDispatchSetting
   return {
     initialRadiusKm: valueFor("BROADCAST_INITIAL_RADIUS_KM", 5),
     maxRadiusKm: valueFor("BROADCAST_MAX_RADIUS_KM", 20),
+    waveSize: valueFor("BROADCAST_WAVE_SIZE", 3),
   };
 }
 
@@ -190,6 +192,13 @@ export async function updateRiderDispatchSettings(settings: RiderDispatchSetting
       body: JSON.stringify({
         value: String(settings.maxRadiusKm),
         description: "Maximum rider broadcast radius before the backend stops expanding the search.",
+      }),
+    }),
+    apiFetch("/admin/config/system/BROADCAST_WAVE_SIZE", {
+      method: "PUT",
+      body: JSON.stringify({
+        value: String(settings.waveSize),
+        description: "Number of nearest eligible riders notified in each dispatch wave.",
       }),
     }),
   ]);

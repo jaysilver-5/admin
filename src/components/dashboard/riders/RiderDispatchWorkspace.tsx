@@ -27,7 +27,7 @@ import {
   updateRiderDispatchSettings,
 } from "@/lib/rider-dispatch";
 
-const EMPTY_SETTINGS: RiderDispatchSettings = { initialRadiusKm: 100, maxRadiusKm: 200 };
+const EMPTY_SETTINGS: RiderDispatchSettings = { initialRadiusKm: 100, maxRadiusKm: 200, waveSize: 3 };
 
 function ageLabel(value: string) {
   if (!value) return "Age unavailable";
@@ -162,6 +162,7 @@ export default function RiderDispatchWorkspace({ permissions = [] }: { permissio
   const saveSettings = async () => {
     const initial = Number(settings.initialRadiusKm);
     const max = Number(settings.maxRadiusKm);
+    const waveSize = Math.floor(Number(settings.waveSize));
     if (!Number.isFinite(initial) || initial <= 0 || !Number.isFinite(max) || max <= 0) {
       setSettingsError("Both distances must be positive numbers.");
       return;
@@ -170,12 +171,16 @@ export default function RiderDispatchWorkspace({ permissions = [] }: { permissio
       setSettingsError("Maximum distance must be greater than or equal to the initial distance.");
       return;
     }
+    if (!Number.isFinite(waveSize) || waveSize < 1 || waveSize > 20) {
+      setSettingsError("Riders per wave must be between 1 and 20.");
+      return;
+    }
     setSavingSettings(true);
     setSettingsError(null);
     try {
-      await updateRiderDispatchSettings({ initialRadiusKm: initial, maxRadiusKm: max });
-      setSettings({ initialRadiusKm: initial, maxRadiusKm: max });
-      setSuccess("Rider search distances were updated.");
+      await updateRiderDispatchSettings({ initialRadiusKm: initial, maxRadiusKm: max, waveSize });
+      setSettings({ initialRadiusKm: initial, maxRadiusKm: max, waveSize });
+      setSuccess("Rider search distance and nearest-rider wave size were updated.");
     } catch (err: any) {
       setSettingsError(err?.message || "Unable to update rider search distances.");
     } finally {
@@ -259,9 +264,10 @@ export default function RiderDispatchWorkspace({ permissions = [] }: { permissio
         {canViewSettings && <aside className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-2"><Settings2 className="h-5 w-5 text-[#0B1E5B]" /><h2 className="font-semibold text-gray-950">Search distance</h2></div>
           <p className="mt-1 text-sm text-gray-500">The system begins nearby, then expands progressively up to the maximum.</p>
-          <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <label className="text-sm font-medium text-gray-700">Initial (km)<input type="number" min="0.1" step="0.1" value={settings.initialRadiusKm} onChange={(event) => setSettings((current) => ({ ...current, initialRadiusKm: Number(event.target.value) }))} className="mt-1.5 h-11 w-full rounded-lg border border-gray-200 px-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
             <label className="text-sm font-medium text-gray-700">Maximum (km)<input type="number" min="0.1" step="0.1" value={settings.maxRadiusKm} onChange={(event) => setSettings((current) => ({ ...current, maxRadiusKm: Number(event.target.value) }))} className="mt-1.5 h-11 w-full rounded-lg border border-gray-200 px-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
+            <label className="text-sm font-medium text-gray-700">Riders per wave<input type="number" min="1" max="20" step="1" value={settings.waveSize} onChange={(event) => setSettings((current) => ({ ...current, waveSize: Number(event.target.value) }))} className="mt-1.5 h-11 w-full rounded-lg border border-gray-200 px-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
           </div>
           {settingsError && <p role="alert" className="mt-3 text-sm text-red-600">{settingsError}</p>}
           {canManageSettings && <button type="button" onClick={() => void saveSettings()} disabled={savingSettings} className="mt-4 h-10 w-full rounded-lg bg-[#0B1E5B] px-4 text-sm font-semibold text-white hover:bg-[#10276e] disabled:opacity-50">{savingSettings ? "Saving…" : "Save distance settings"}</button>}

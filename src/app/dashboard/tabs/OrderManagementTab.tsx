@@ -8,8 +8,9 @@ import {
   MapPin,
   Phone,
   CheckCircle,
+  RotateCcw,
 } from "lucide-react";
-import { fetchOrderDetail, fetchOrders, type UiOrder as Order, type UiOrderStatus as OrderStatus } from "@/lib/orders";
+import { cancelOrder, fetchOrderDetail, fetchOrders, type UiOrder as Order, type UiOrderStatus as OrderStatus } from "@/lib/orders";
 import { TableLoadingState } from "@/components/dashboard/ui/LoadingState";
 
 /* ------------------------ Pagination util ----------------------- */
@@ -45,6 +46,7 @@ export default function OrderManagementTab() {
   const [safePage, setSafePage] = React.useState(1);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = React.useState(0);
 
   React.useEffect(() => setPage(1), [search, tab]);
 
@@ -63,7 +65,7 @@ export default function OrderManagementTab() {
       .catch((err) => { if (alive) setError(err?.message || "Unable to load orders"); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
-  }, [tab, page, perPage, search]);
+  }, [tab, page, perPage, search, refreshKey]);
 
   async function openOrderModal(o: Order) {
     setActiveOrder(o);
@@ -183,7 +185,15 @@ export default function OrderManagementTab() {
 
       {/* Modal(s) */}
       {open && activeOrder && (
-        <OrderModal order={activeOrder} onClose={closeModal} variant={activeOrder.status} />
+        <OrderModal
+          order={activeOrder}
+          onClose={closeModal}
+          variant={activeOrder.status}
+          onOrderChanged={(next) => {
+            setActiveOrder(next);
+            setRefreshKey((value) => value + 1);
+          }}
+        />
       )}
     </div>
   );
@@ -234,14 +244,54 @@ function PagePills({ page, total, onChange }: { page: number; total: number; onC
 
 /* --------------------------- Modals ---------------------------- */
 
-function OrderModal({ order, onClose, variant }: { order: Order; onClose: () => void; variant: OrderStatus }) {
+function OrderModal({ order, onClose, variant, onOrderChanged }: { order: Order; onClose: () => void; variant: OrderStatus; onOrderChanged: (order: Order) => void }) {
   // local collapse state for tracking
   const [openTracking, setOpenTracking] = React.useState(true);
+  const [showCancel, setShowCancel] = React.useState(false);
+  const [cancelReason, setCancelReason] = React.useState("");
+  const [cancelling, setCancelling] = React.useState(false);
+  const [actionError, setActionError] = React.useState("");
+  const raw = order.raw || {};
+  const backendStatus = String(raw.status || "").toUpperCase();
+  const isReturn = raw.journeyPurpose === "CANCELLATION_RETURN" || Boolean(raw.cancellationRequestedAt);
+  const canCancel = !raw.cancellationRequestedAt && [
+    "PENDING_PICKUP",
+    "PICKUP_ASSIGNED",
+    "PICKUP_IN_PROGRESS",
+    "AT_MERCHANT",
+    "SORTING_AND_PRICING",
+    "AWAITING_PAYMENT",
+  ].includes(backendStatus);
+  const cancellationBreakdown = raw.cancellationBreakdown || {
+    collectionLeg: Number(raw.cancellationPickupFee || 0),
+    returnLeg: Number(raw.cancellationReturnFee || 0),
+    total: Number(raw.cancellationFee || 0),
+  };
+
+  const submitCancellation = async () => {
+    if (!cancelReason.trim()) {
+      setActionError("Enter the customer-facing reason for this cancellation.");
+      return;
+    }
+    setCancelling(true);
+    setActionError("");
+    try {
+      await cancelOrder(order.id, cancelReason.trim());
+      const next = await fetchOrderDetail(order.id);
+      onOrderChanged(next);
+      setShowCancel(false);
+      setCancelReason("");
+    } catch (error: any) {
+      setActionError(error?.message || "Unable to cancel this order.");
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   // common close
   return (
     <div className="fixed inset-0 z-[80] grid place-items-center bg-black/30 p-4">
-      <div className="w-full max-w-[660px] rounded-2xl bg-white py-6 px-32 shadow-xl overflow-auto no-scrollbar max-h-[92vh]">
+      <div className="w-full max-w-[760px] rounded-2xl bg-white p-6 sm:p-8 shadow-xl overflow-auto no-scrollbar max-h-[92vh]">
         <div className="w-full flex justify-end md-4">
           <button onClick={onClose} className="rounded-md p-2 hover:bg-gray-100">
             <X className="h-5 w-5 text-gray-600" />
@@ -249,7 +299,7 @@ function OrderModal({ order, onClose, variant }: { order: Order; onClose: () => 
         </div>
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            {variant === "completed" ? <StatusBadgeCompleted text="Clothes Delivered" /> : variant === "cancelled" ? <StatusBadgeCancelled text="Cancelled" /> : <StatusBadge text="Clothes Delivered" />}
+            {variant === "completed" ? <StatusBadgeCompleted text="Clothes delivered" /> : variant === "cancelled" ? <StatusBadgeCancelled text="Cancelled" /> : isReturn ? <StatusBadgeReturn text="Cancellation return in progress" /> : <StatusBadge text={backendStatus.replaceAll("_", " ")} />}
           </div>
         </div>
 
@@ -280,6 +330,19 @@ function OrderModal({ order, onClose, variant }: { order: Order; onClose: () => 
           </div>
         </div>
 
+        {isReturn && (
+          <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <div className="flex items-center gap-2 font-semibold text-amber-950"><RotateCcw className="h-4 w-4" /> Customer return</div>
+            <p className="mt-1 text-sm text-amber-800">Custody: {String(raw.custody || "UNKNOWN").replaceAll("_", " ")}</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              <SmallCard label="Collection leg" value={`₦${Number(cancellationBreakdown.collectionLeg || 0).toLocaleString()}`} />
+              <SmallCard label="Return leg" value={`₦${Number(cancellationBreakdown.returnLeg || 0).toLocaleString()}`} />
+              <SmallCard label="Customer total" value={`₦${Number(cancellationBreakdown.total || 0).toLocaleString()}`} />
+            </div>
+            <p className="mt-3 text-xs font-medium text-amber-900">{raw.cancellationPaidAt ? "Return logistics paid. Dispatch uses the nearest-rider broadcast." : backendStatus === "PICKUP_IN_PROGRESS" ? "The pickup rider must first secure the clothes at the merchant." : "Waiting for the customer to pay the two-leg logistics charge."}</p>
+          </div>
+        )}
+
         {/* tracking */}
         <div className="mt-5">
           <div className="inline-flex items-center gap-2">
@@ -302,7 +365,21 @@ function OrderModal({ order, onClose, variant }: { order: Order; onClose: () => 
         </div>
 
         {/* actions area for active */}
-
+        {variant === "active" && canCancel && !showCancel && (
+          <button onClick={() => setShowCancel(true)} className="mt-6 w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 hover:bg-red-100">Cancel on behalf of customer</button>
+        )}
+        {variant === "active" && canCancel && showCancel && (
+          <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4">
+            <h3 className="font-semibold text-red-950">Confirm customer cancellation</h3>
+            <p className="mt-1 text-sm text-red-800">The same custody and two-leg fee rules used in the customer app will apply. This action is recorded as an admin cancellation.</p>
+            <textarea value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} placeholder="Required cancellation reason" className="mt-3 min-h-24 w-full rounded-lg border border-red-200 bg-white p-3 text-sm outline-none focus:ring-2 focus:ring-red-200" />
+            {actionError && <p className="mt-2 text-sm text-red-700">{actionError}</p>}
+            <div className="mt-3 flex justify-end gap-2">
+              <button disabled={cancelling} onClick={() => { setShowCancel(false); setActionError(""); }} className="rounded-lg px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-white">Keep order</button>
+              <button disabled={cancelling} onClick={() => void submitCancellation()} className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{cancelling ? "Cancelling…" : "Confirm cancellation"}</button>
+            </div>
+          </div>
+        )}
 
         {/* footer for completed/cancelled: just summary */}
         {(variant === "completed" || variant === "cancelled") && (
@@ -343,6 +420,14 @@ function StatusBadgeCancelled({ text = "Cancelled" }: { text?: string }) {
   return (
     <div className="inline-flex w-full items-center justify-center rounded-md border-dashed border-2 border-red-200 bg-red-50 py-2 px-4 text-red-700 font-semibold">
       &#x26A0; {text}
+    </div>
+  );
+}
+function StatusBadgeReturn({ text }: { text: string }) {
+  return (
+    <div className="inline-flex w-full items-center justify-center rounded-md border-2 border-dashed border-amber-300 bg-amber-50 py-2 px-4 font-semibold text-amber-800">
+      <RotateCcw className="mr-2 h-4 w-4" />
+      {text}
     </div>
   );
 }
