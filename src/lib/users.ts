@@ -4,6 +4,7 @@ export type UserStatus = "verified" | "suspended" | "pending";
 
 export type User = {
   id: string;
+  publicId: string;
   fullName: string;
   phoneNumber: string;
   email: string;
@@ -44,6 +45,7 @@ const isRecentlyLoggedIn = (lastLoginAt?: string | null) => {
 function mapBackendUser(user: any): User {
   return {
     id: String(user.id),
+    publicId: String(user.publicId || user.id),
     fullName: user.fullName || user.profile?.fullName || user.userProfile?.fullName || "—",
     phoneNumber: user.phone || "—",
     email: user.email || "—",

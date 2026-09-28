@@ -4,9 +4,15 @@ export type UiOrderStatus = "active" | "completed" | "cancelled";
 
 export type UiOrder = {
   id: string;
+  orderNumber: string;
   userName: string;
+  userPublicId?: string;
+  customerPhone?: string;
   washType: string;
   merchantName: string;
+  merchantPublicId?: string;
+  merchantPhone?: string;
+  merchantAddress?: string;
   city: string;
   state: string;
   requestDate: string;
@@ -16,6 +22,18 @@ export type UiOrder = {
   transactionId: string;
   rider?: string;
   riderPhone?: string;
+  riderAssignments: {
+    id: string;
+    role: string;
+    status: string;
+    name: string;
+    publicId?: string;
+    phone?: string;
+    vehicle?: string;
+    assignedAt?: string;
+    acceptedAt?: string;
+    completedAt?: string;
+  }[];
   status: UiOrderStatus;
   timeline?: { title: string; body?: string; date: string }[];
   raw?: any;
@@ -34,15 +52,35 @@ function mapStatus(status: string): UiOrderStatus {
 }
 
 export function mapBackendOrder(order: any): UiOrder {
-  const riderAssignment = (order.riderAssignments || [])?.[0];
-  const rider = riderAssignment?.rider;
-  const riderName = rider?.fullName || [rider?.firstName, rider?.lastName].filter(Boolean).join(" ") || undefined;
+  const assignments = (order.riderAssignments || []).map((assignment: any) => {
+    const assignmentRider = assignment.rider || {};
+    return {
+      id: String(assignment.id || `${assignment.role}-${assignment.riderId}`),
+      role: String(assignment.role || "RIDER"),
+      status: String(assignment.status || "UNKNOWN"),
+      name: assignmentRider.fullName || assignmentRider.displayName || [assignmentRider.firstName, assignmentRider.lastName].filter(Boolean).join(" ") || "Rider",
+      publicId: assignmentRider.publicId || assignmentRider.account?.publicId || undefined,
+      phone: assignmentRider.phone || assignmentRider.account?.phone || undefined,
+      vehicle: assignmentRider.vehicleLabel || assignmentRider.vehicleType || undefined,
+      assignedAt: assignment.assignedAt,
+      acceptedAt: assignment.acceptedAt,
+      completedAt: assignment.completedAt,
+    };
+  });
+  const riderAssignment = assignments.find((assignment: any) => assignment.status === "ACCEPTED") || assignments[0];
+  const riderName = riderAssignment?.name;
   const createdAt = order.createdAt || order.updatedAt;
   return {
     id: String(order.id),
+    orderNumber: String(order.orderNumber || order.id),
     userName: order.customer?.name || order.contactName || order.user?.userProfile?.fullName || order.user?.email || "—",
+    userPublicId: order.user?.publicId || undefined,
+    customerPhone: order.customer?.phone || order.contactPhone || order.user?.phone || undefined,
     washType: order.deliveryType || order.serviceType || order.washType || "Laundry",
     merchantName: order.merchant?.businessName || "—",
+    merchantPublicId: order.merchant?.account?.publicId || undefined,
+    merchantPhone: order.merchant?.businessPhone || order.merchant?.account?.phone || undefined,
+    merchantAddress: order.merchant?.address || undefined,
     city: order.pickupCity || order.merchant?.city || "—",
     state: order.pickupState || order.merchant?.state || "—",
     requestDate: formatDate(createdAt),
@@ -51,11 +89,12 @@ export function mapBackendOrder(order: any): UiOrder {
     deliveryRate: Number(order.logisticsFee || order.deliveryFee || order.deliveryRate || 0),
     transactionId: order.paymentReference || order.orderNumber || order.id,
     rider: riderName,
-    riderPhone: rider?.phone || rider?.account?.phone || undefined,
+    riderPhone: riderAssignment?.phone,
+    riderAssignments: assignments,
     status: mapStatus(order.status),
     timeline: (order.timeline || []).map((event: any) => ({
       title: String(event.type || "Update").replace(/_/g, " "),
-      body: event.data?.note || event.data?.message || event.data?.body || undefined,
+      body: event.data?.note || event.data?.message || event.data?.body || (event.data?.from && event.data?.to ? `${String(event.data.from).replaceAll("_", " ")} → ${String(event.data.to).replaceAll("_", " ")}` : undefined),
       date: `${formatDate(event.createdAt)} ${formatTime(event.createdAt)}`,
     })),
     raw: order,

@@ -24,9 +24,10 @@ export default function UserTable({
 
   return (
     <div className="overflow-x-auto overscroll-x-contain" tabIndex={0} aria-label="Users table, horizontally scrollable">
-      <table className="w-full min-w-[820px] table-fixed divide-y divide-gray-200">
+      <table className="w-full min-w-[920px] table-fixed divide-y divide-gray-200">
         <colgroup>
           <col className="w-14" />
+          <col className="w-28" />
           <col className="w-[17%]" />
           <col className="w-[16%]" />
           <col className="w-[25%]" />
@@ -47,6 +48,7 @@ export default function UserTable({
               />
             </th>
             {[
+              "User ID",
               "Full Name",
               "Phone Number",
               "Email Address",
@@ -81,6 +83,11 @@ export default function UserTable({
                     aria-label={`Select ${u.fullName || "user"}`}
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
+                </td>
+
+                {/* name */}
+                <td className="px-3 py-3 text-sm font-semibold tracking-wider text-gray-700">
+                  <CopyableCell value={u.publicId} label="user ID" truncate={false} />
                 </td>
 
                 {/* name */}
@@ -143,7 +150,7 @@ export default function UserTable({
           })}
           {users.length === 0 && (
             <tr>
-              <td colSpan={7} className="px-6 py-12 text-center text-sm text-gray-500">
+              <td colSpan={8} className="px-6 py-12 text-center text-sm text-gray-500">
                 No users match the current search and filters.
               </td>
             </tr>

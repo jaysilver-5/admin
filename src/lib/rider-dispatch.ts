@@ -128,7 +128,7 @@ function normalizeCandidate(input: UnknownRecord, configuredMax = 5): DispatchRi
   return {
     riderId: text(input.riderId, rider.id, input.id),
     name,
-    identifier: text(input.identifier, input.riderCode, rider.identifier, rider.id, input.id),
+    identifier: text(input.publicId, input.identifier, input.riderCode, rider.publicId, rider.identifier, rider.id, input.id),
     phone: text(input.phone, input.phoneNumber, rider.phone, account.phone),
     vehicle: text(input.vehicle, input.vehicleType, rider.vehicleType) || "Vehicle not set",
     distanceKm: finiteNumber(input.distanceKm, input.distance, rider.distanceKm),

@@ -262,6 +262,8 @@ export default function DashboardPage() {
             <WithdrawalsTab permissions={admin.permissions} />
           ) : activeTab.slug === "riders" ? (
             <RiderManagementTab permissions={admin.permissions} />
+          ) : activeTab.slug === "orders" ? (
+            <OrderManagementTab permissions={admin.permissions} />
           ) : (
             <ActiveView />
           )}

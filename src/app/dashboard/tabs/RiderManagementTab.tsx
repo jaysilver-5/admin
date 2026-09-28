@@ -262,8 +262,8 @@ export default function RiderManagementTab({ permissions = [] }: { permissions?:
         {loading && <TableLoadingState rows={6} columns={7} label="Loading riders" />}
 
         {!loading && <div className="overflow-x-auto overscroll-x-contain" tabIndex={0} aria-label="Riders table, horizontally scrollable">
-          <table className="w-full min-w-[920px] table-fixed divide-y divide-gray-200">
-            <colgroup><col className="w-12"/><col className="w-[17%]"/><col className="w-[15%]"/><col className="w-[21%]"/><col className="w-[12%]"/><col className="w-[16%]"/><col className="w-[11%]"/><col className="w-24"/></colgroup>
+          <table className="w-full min-w-[1020px] table-fixed divide-y divide-gray-200">
+            <colgroup><col className="w-12"/><col className="w-28"/><col className="w-[17%]"/><col className="w-[15%]"/><col className="w-[21%]"/><col className="w-[12%]"/><col className="w-[16%]"/><col className="w-[11%]"/><col className="w-24"/></colgroup>
             <thead className="bg-gray-50">
               <tr>
                 <th className="sticky left-0 z-20 bg-gray-50 px-3 py-2.5">
@@ -279,6 +279,7 @@ export default function RiderManagementTab({ permissions = [] }: { permissions?:
                   />
                 </th>
                 {[
+                  "Rider ID",
                   "Rider Name",
                   "Phone Number",
                   "Email Address",
@@ -313,6 +314,9 @@ export default function RiderManagementTab({ permissions = [] }: { permissions?:
                     />
                   </td>
 
+                  <td className="px-3 py-3 text-sm font-semibold tracking-wider text-gray-700">
+                    <CopyableCell value={r.publicId} label="rider ID" truncate={false} />
+                  </td>
                   <td className="px-3 py-3 text-sm font-medium text-gray-900">
                     <CopyableCell value={r.fullName} label="rider name" />
                   </td>
@@ -347,7 +351,7 @@ export default function RiderManagementTab({ permissions = [] }: { permissions?:
                   </td>
                 </tr>
               ))}
-              {items.length === 0 && <tr><td colSpan={8} className="px-6 py-12 text-center text-sm text-gray-500">No riders match the current search and filters.</td></tr>}
+              {items.length === 0 && <tr><td colSpan={9} className="px-6 py-12 text-center text-sm text-gray-500">No riders match the current search and filters.</td></tr>}
             </tbody>
           </table>
         </div>}

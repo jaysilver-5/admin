@@ -12,6 +12,7 @@ export type MerchantDocument = {
 
 export type Merchant = {
   id: string;
+  publicId: string;
   businessName: string;
   phoneNumber: string;
   email: string;
@@ -58,6 +59,7 @@ function serviceTier(value?: string | null) {
 export function mapBackendMerchant(m: any): Merchant {
   return {
     id: String(m.id),
+    publicId: String(m.publicId || m.account?.publicId || m.id),
     businessName: m.businessName || m.fullName || m.account?.email || "—",
     phoneNumber: m.businessPhone || m.phone || m.account?.phone || "—",
     email: m.businessEmail || m.email || m.account?.email || "—",

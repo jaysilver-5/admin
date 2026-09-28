@@ -25,7 +25,7 @@ export default function MerchantTable({
 
   return (
     <div className="overflow-x-auto overscroll-x-contain" tabIndex={0} aria-label="Merchants table, horizontally scrollable">
-      <table className="w-full min-w-[980px] table-fixed divide-y divide-gray-200">
+      <table className="w-full min-w-[1080px] table-fixed divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
             <th className="px-3 py-2.5 text-left">
@@ -38,7 +38,7 @@ export default function MerchantTable({
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
             </th>
-            {["Business Name","Phone Number","Email Address","Business Address","Last Login Date","Service","Actions"].map((h) => (
+            {["Merchant ID","Business Name","Phone Number","Email Address","Business Address","Last Login Date","Service","Actions"].map((h) => (
               <th key={h} className="px-3 py-2.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
                 {h}
               </th>
@@ -60,6 +60,7 @@ export default function MerchantTable({
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                 </td>
+                <td className="px-3 py-3 text-sm font-semibold tracking-wider text-gray-700"><CopyableCell value={m.publicId} label="merchant ID" truncate={false}/></td>
                 <td className="px-3 py-3 text-sm font-medium text-gray-900"><CopyableCell value={m.businessName} label="business name"/></td>
                 <td className="px-3 py-3 text-sm text-gray-500"><CopyableCell value={formatNigerianPhone(m.phoneNumber)} label="phone number" truncate={false}/></td>
                 <td className="px-3 py-3 text-sm text-gray-900"><CopyableCell value={m.email} label="email address"/></td>

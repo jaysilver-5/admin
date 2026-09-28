@@ -5,6 +5,7 @@ export type RiderStatus = "verified" | "pending" | "rejected" | "suspended";
 
 export interface Rider {
   id: string;
+  publicId: string;
   fullName: string;
   phoneNumber: string;
   email: string;
@@ -45,6 +46,7 @@ export function mapBackendRider(r: any): Rider {
   const fullName = r.fullName || [r.firstName, r.lastName].filter(Boolean).join(" ") || r.account?.email || "—";
   return {
     id: String(r.id),
+    publicId: String(r.publicId || r.account?.publicId || r.id),
     fullName,
     phoneNumber: r.phone || r.account?.phone || "—",
     email: r.email || r.account?.email || "—",
