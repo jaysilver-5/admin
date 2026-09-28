@@ -30,7 +30,11 @@ export interface DispatchRiderCandidate {
   activeAssignments: number;
   maxAssignments: number;
   isOnline: boolean;
+  locationFresh: boolean;
+  locationUpdatedAt?: string;
+  locationAgeMinutes?: number;
   available: boolean;
+  ineligibilityReasons: string[];
 }
 
 export interface RiderDispatchSettings {
@@ -131,7 +135,13 @@ function normalizeCandidate(input: UnknownRecord, configuredMax = 5): DispatchRi
     activeAssignments,
     maxAssignments,
     isOnline: Boolean(input.isOnline ?? rider.isOnline ?? true),
+    locationFresh: Boolean(input.locationFresh ?? false),
+    locationUpdatedAt: text(input.locationUpdatedAt, rider.locationUpdatedAt) || undefined,
+    locationAgeMinutes: finiteNumber(input.locationAgeMinutes, rider.locationAgeMinutes),
     available: Boolean(input.available ?? (activeAssignments < maxAssignments)),
+    ineligibilityReasons: Array.isArray(input.ineligibilityReasons)
+      ? input.ineligibilityReasons.map((reason) => text(reason)).filter(Boolean)
+      : [],
   };
 }
 
@@ -173,33 +183,45 @@ export async function fetchRiderDispatchSettings(): Promise<RiderDispatchSetting
 
   return {
     initialRadiusKm: valueFor("BROADCAST_INITIAL_RADIUS_KM", 5),
-    maxRadiusKm: valueFor("BROADCAST_MAX_RADIUS_KM", 20),
+    maxRadiusKm: valueFor("BROADCAST_MAX_RADIUS_KM", 25),
     waveSize: valueFor("BROADCAST_WAVE_SIZE", 3),
   };
 }
 
 export async function updateRiderDispatchSettings(settings: RiderDispatchSettings) {
-  return Promise.all([
+  const current = await fetchRiderDispatchSettings();
+  const updateInitial = () =>
     apiFetch("/admin/config/system/BROADCAST_INITIAL_RADIUS_KM", {
       method: "PUT",
       body: JSON.stringify({
         value: String(settings.initialRadiusKm),
         description: "Initial radius used when broadcasting pickup and delivery jobs to nearby riders.",
       }),
-    }),
+    });
+  const updateMaximum = () =>
     apiFetch("/admin/config/system/BROADCAST_MAX_RADIUS_KM", {
       method: "PUT",
       body: JSON.stringify({
         value: String(settings.maxRadiusKm),
         description: "Maximum rider broadcast radius before the backend stops expanding the search.",
       }),
+    });
+
+  // Preserve the backend's initial <= maximum invariant throughout the two
+  // requests, including when both bounds move above or below the old range.
+  if (settings.initialRadiusKm > current.maxRadiusKm) {
+    await updateMaximum();
+    await updateInitial();
+  } else {
+    await updateInitial();
+    await updateMaximum();
+  }
+
+  return apiFetch("/admin/config/system/BROADCAST_WAVE_SIZE", {
+    method: "PUT",
+    body: JSON.stringify({
+      value: String(settings.waveSize),
+      description: "Number of nearest eligible riders notified in each dispatch wave.",
     }),
-    apiFetch("/admin/config/system/BROADCAST_WAVE_SIZE", {
-      method: "PUT",
-      body: JSON.stringify({
-        value: String(settings.waveSize),
-        description: "Number of nearest eligible riders notified in each dispatch wave.",
-      }),
-    }),
-  ]);
+  });
 }
