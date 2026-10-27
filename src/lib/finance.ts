@@ -46,6 +46,7 @@ export type Withdrawal = {
   status: "PENDING_OTP" | "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | "REJECTED";
   reference?: string | null;
   transferRef?: string | null;
+  transferCode?: string | null;
   failureReason?: string | null;
   reviewReason?: string | null;
   createdAt: string;

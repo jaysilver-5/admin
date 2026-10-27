@@ -1,8 +1,21 @@
+const APP_ENVIRONMENT = process.env.NEXT_PUBLIC_APP_ENV || "production";
+const RELEASE_API_URL = APP_ENVIRONMENT === "staging"
+  ? "https://aws-test.clothify.ng"
+  : "https://api.clothify.ng";
+
 export const API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_BASE_URL ||
-  process.env.NEXT_PUBLIC_BACKEND_URL ||
-  "http://localhost:3000"
+  (process.env.NODE_ENV === "production"
+    ? RELEASE_API_URL
+    : "http://localhost:3000")
 ).replace(/\/$/, "");
+
+if (
+  process.env.NODE_ENV === "production" &&
+  API_BASE_URL !== RELEASE_API_URL
+) {
+  throw new Error(`The production admin build must use ${RELEASE_API_URL}.`);
+}
 
 export type ApiList<T> = {
   items: T[];
@@ -117,7 +130,10 @@ async function performSessionRefresh() {
     body: JSON.stringify({ refreshToken, sessionId }),
   });
 
-  const payload = await res.json().catch(() => null);
+  const responseBody = await res.json().catch(() => null);
+  const payload = responseBody?.success === true && "data" in responseBody
+    ? responseBody.data
+    : responseBody;
   if (!res.ok || !payload?.accessToken) return null;
 
   const nextSession: AuthSession = { ...payload, user };
